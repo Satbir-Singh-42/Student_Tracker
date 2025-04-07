@@ -1,0 +1,162 @@
+**AI-Readable Technical Brief: Student Activity Record Platform**
+
+---
+
+### 📗 PROJECT OVERVIEW
+**Title:** Student Activity Record Platform  
+**Objective:** To build a web application for students to upload their academic, co-curricular, and extracurricular achievements. These records are reviewed by teachers and managed by a super admin.
+
+**User Roles:**
+- Student
+- Teacher
+- Super Admin
+
+---
+
+### 🔎 USER STORIES
+
+#### 1. Student
+- Can register and login.
+- Can upload achievements with proof (PDF, images, etc.).
+- Can view status: Submitted, Pending, Verified, Rejected.
+- Can edit and resubmit rejected submissions.
+- Can generate downloadable activity reports.
+
+#### 2. Teacher
+- Can login and see activities submitted by students of their department.
+- Can verify or reject activities.
+- Can provide feedback for rejection.
+- Can generate departmental reports.
+
+#### 3. Super Admin
+- Can manage users (add/edit/delete teachers and students).
+- Can view system-wide statistics.
+- Can generate global reports.
+- Can reset credentials.
+
+---
+
+### 📝 DATA MODELS
+
+#### User (Base)
+- ID (UUID)
+- Name
+- Email
+- Password (hashed)
+- Role (student | teacher | admin)
+- ProfileImage (optional)
+
+#### StudentProfile
+- UserID (FK)
+- Roll Number
+- Department
+- Year
+- Course
+
+#### Achievement
+- ID (UUID)
+- StudentID (FK)
+- Title
+- Description
+- Type (academic | sports | co-curricular | extra-curricular)
+- Date of activity
+- Proof (File URL)
+- Status (Submitted | Pending | Verified | Rejected)
+- Feedback (if rejected)
+- LastUpdated
+
+---
+
+### 🚀 TECH STACK (Chosen for rapid development and clean UI)
+
+#### Frontend
+- React.js
+- Bootstrap (Grid and responsiveness)
+- Material UI (tabs, cards, dialogs, tables)
+- React-Router-DOM (for page navigation)
+- Axios (for API calls)
+
+#### Backend
+- Python 3
+- Flask
+- Flask-CORS, Flask-JWT-Extended (for secure login)
+- Flask-Mail (optional for notifications)
+- Werkzeug (file uploads)
+
+#### Database
+- SQLite (for demo/hackathon)
+- PostgreSQL (production ready)
+
+#### Reports
+- CSV via Pandas
+- PDF via WeasyPrint/pdfkit
+
+---
+
+### 🔄 SYSTEM WORKFLOW
+
+1. **Registration & Login**
+   - JWT token issued after login.
+2. **Dashboard Access**
+   - Role-based dashboard loads based on JWT role.
+3. **Student Flow**
+   - Upload new achievement ➔ Auto set to "Submitted"
+   - System auto-changes status to "Pending" for teacher
+   - Rejected activities must be edited and resubmitted
+4. **Teacher Flow**
+   - View assigned submissions
+   - Mark as Verified or Rejected with feedback
+5. **Admin Flow**
+   - Monitor all submissions
+   - Manage users
+   - Access system reports
+6. **Report Generation**
+   - Available to all roles (role-scoped)
+   - Format: PDF/CSV
+
+---
+
+### 🔌 PAGES (Frontend Routing)
+- `/register` (Student Registration)
+- `/login`
+- `/student/dashboard`
+- `/student/upload`
+- `/student/history`
+- `/teacher/dashboard`
+- `/admin/dashboard`
+- `/admin/manage-users`
+- `/report/download`
+
+---
+
+### 🚧 VALIDATIONS & EDGE CASES
+- File size/type validation (only JPG/PNG/PDF < 5MB)
+- Unique title per student submission
+- Block resubmission unless rejected
+- No duplicate roll number or email at registration
+- Reject reason must be non-empty
+- Reports should fail gracefully if no data exists
+
+---
+
+### ✅ AI USAGE IN DEVELOPMENT
+- Code generation via prompts (e.g., "Create Flask API for user login")
+- Auto-generate form components using MUI/Bootstrap templates
+- Use GPT-based validation schema builders (like Zod/yup with React)
+- Create mock data using Faker.js or GPT-based schema generation
+- Generate role-based guards in React Router
+
+---
+
+### 🔧 READY FOR AI CODING TOOLS
+This brief is structured for AI understanding. Any AI system (e.g., GitHub Copilot, ChatGPT Code Interpreter, Replit Ghostwriter, or AutoGPT) can:
+- Use this to generate schema
+- Build full APIs
+- Scaffold frontend routes & components
+- Automate test generation
+- Setup CI/CD workflows
+
+---
+
+Let me know if you want a JSON schema or Swagger API definition next 🚀
+
