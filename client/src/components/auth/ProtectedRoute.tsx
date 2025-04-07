@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import type { ComponentType } from "react";
 import { useAuth } from "@/lib/auth";
 import { Route, useLocation } from "wouter";
 import NotFound from "@/pages/not-found";
@@ -5,7 +7,7 @@ import AppLayout from "@/components/layout/AppLayout";
 
 type ProtectedRouteProps = {
   path: string;
-  component: React.ComponentType;
+  component: ComponentType;
   allowedRoles: Array<"student" | "teacher" | "admin">;
   redirect?: string;
 };
@@ -14,7 +16,7 @@ export const ProtectedRoute = ({
   path,
   component: Component,
   allowedRoles,
-  redirect = "/login",
+  redirect = "/auth",
 }: ProtectedRouteProps) => {
   const { user, isLoading } = useAuth();
   const [, setLocation] = useLocation();
@@ -34,7 +36,10 @@ export const ProtectedRoute = ({
     return (
       <Route path={path}>
         {() => {
-          setLocation(redirect);
+          // Use useEffect inside the component to avoid React update during render warning
+          useEffect(() => {
+            setLocation(redirect);
+          }, []);
           return null;
         }}
       </Route>
