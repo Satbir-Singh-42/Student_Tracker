@@ -5,6 +5,20 @@ import { Route, useLocation } from "wouter";
 import NotFound from "@/pages/not-found";
 import AppLayout from "@/components/layout/AppLayout";
 
+// Separate component to handle redirects to avoid hook issues
+const RedirectComponent = ({ 
+  redirect, 
+  setLocation 
+}: { 
+  redirect: string, 
+  setLocation: (to: string) => void 
+}) => {
+  useEffect(() => {
+    setLocation(redirect);
+  }, [redirect, setLocation]);
+  return null;
+};
+
 type ProtectedRouteProps = {
   path: string;
   component: ComponentType;
@@ -35,13 +49,7 @@ export const ProtectedRoute = ({
   if (!user) {
     return (
       <Route path={path}>
-        {() => {
-          // Use useEffect inside the component to avoid React update during render warning
-          useEffect(() => {
-            setLocation(redirect);
-          }, []);
-          return null;
-        }}
+        <RedirectComponent redirect={redirect} setLocation={setLocation} />
       </Route>
     );
   }

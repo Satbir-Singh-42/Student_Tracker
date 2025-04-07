@@ -143,7 +143,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // The client will clear the token
     res.status(200).json({ message: "Logged out successfully" });
   });
-  
 
   app.post("/api/auth/register", async (req, res) => {
     try {
@@ -500,9 +499,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.user.role === "admin") {
         achievements = await storage.getAllAchievements();
       } else if (req.user.role === "teacher") {
-        // Teachers see achievements from all departments for simplicity in demo
-        // In production, we would get the teacher's assigned department
-        const teacherDepartment = req.query.department as string || "Computer Science";
+        const teacherDepartment = req.query.department as string;
+        if (!teacherDepartment) {
+          return res.status(400).json({ message: "Department is required" });
+        }
         achievements = await storage.getAchievementsByDepartment(teacherDepartment);
       } else {
         achievements = await storage.getAchievementsByStudent(req.user.id);
@@ -540,11 +540,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.user.role === "admin") {
         achievements = await storage.getAllAchievements();
       } else if (req.user.role === "teacher") {
-      } else if (req.user.role === "teacher") {
-        // Teachers see achievements from all departments for simplicity in demo
-        // In production, we would get the teacher's assigned department
-        const teacherDepartment = req.query.department as string || "Computer Science";
+        const teacherDepartment = req.query.department as string;
+        if (!teacherDepartment) {
+          return res.status(400).json({ message: "Department is required" });
+        }
         achievements = await storage.getAchievementsByDepartment(teacherDepartment);
+      } else {
         achievements = await storage.getAchievementsByStudent(req.user.id);
       }
 

@@ -9,7 +9,7 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const { user } = useAuth();
-  const logout = useLogout();
+  const { mutate: logoutMutation } = useLogout();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Close mobile menu when window is resized to desktop
@@ -23,6 +23,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Handle logout
+  const handleLogout = () => {
+    logoutMutation();
+  };
 
   if (!user) {
     return null;
@@ -53,14 +58,14 @@ export default function AppLayout({ children }: AppLayoutProps) {
       </header>
 
       {/* Sidebar - Desktop */}
-      <Sidebar user={user} onLogout={logout} />
+      <Sidebar user={user} onLogout={handleLogout} />
 
       {/* Mobile Sidebar */}
       <MobileSidebar 
         user={user} 
         isOpen={isMobileMenuOpen} 
         onClose={() => setIsMobileMenuOpen(false)} 
-        onLogout={logout}
+        onLogout={handleLogout}
       />
 
       {/* Main Content */}

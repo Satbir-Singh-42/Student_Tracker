@@ -126,9 +126,29 @@ export const useRegister = () => {
 export const useLogout = () => {
   const { logout } = useAuth();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   
-  return () => {
-    logout();
-    queryClient.clear();
-  };
+  return useMutation({
+    mutationFn: async () => {
+      try {
+        // Call server to logout first (in case we need to clear server-side session in the future)
+        await apiRequest('POST', '/api/auth/logout');
+        logout();
+        queryClient.clear();
+        return true;
+      } catch (error: any) {
+        console.error("Logout failed with error:", error);
+        // Still logout locally even if server call fails
+        logout();
+        queryClient.clear();
+        return true;
+      }
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Successfully logged out',
+        variant: 'success',
+      });
+    }
+  });
 };
