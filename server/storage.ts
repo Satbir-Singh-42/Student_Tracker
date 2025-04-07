@@ -45,16 +45,100 @@ export class MemStorage implements IStorage {
     this.currentProfileId = 1;
     this.currentAchievementId = 1;
     
-    // Add a default admin user
+    // Add demo accounts for all roles
+    this.createDemoAccounts();
+  }
+  
+  // Create demo accounts for different roles
+  private createDemoAccounts() {
+    // Admin user
     const adminUser: User = {
       id: this.currentUserId++,
       name: "Admin User",
       email: "admin@example.com",
-      password: "$2b$10$TmVRx9FvuYXDcgMsUDOjO.nA3.2P3eyqvfq/0H3p5iyVXf0o2hVY2", // hashed "admin123"
+      password: "$2b$10$TmVRx9FvuYXDcgMsUDOjO.nA3.2P3eyqvfq/0H3p5iyVXf0o2hVY2", // hashed "password123"
       role: "admin",
       profileImage: null
     };
     this.users.set(adminUser.id, adminUser);
+    
+    // Teacher user
+    const teacherUser: User = {
+      id: this.currentUserId++,
+      name: "Teacher User",
+      email: "teacher@example.com",
+      password: "$2b$10$TmVRx9FvuYXDcgMsUDOjO.nA3.2P3eyqvfq/0H3p5iyVXf0o2hVY2", // hashed "password123"
+      role: "teacher",
+      profileImage: null
+    };
+    this.users.set(teacherUser.id, teacherUser);
+    
+    // Student user
+    const studentUser: User = {
+      id: this.currentUserId++,
+      name: "Student User",
+      email: "student@example.com",
+      password: "$2b$10$TmVRx9FvuYXDcgMsUDOjO.nA3.2P3eyqvfq/0H3p5iyVXf0o2hVY2", // hashed "password123"
+      role: "student",
+      profileImage: null
+    };
+    this.users.set(studentUser.id, studentUser);
+    
+    // Create student profile for the student user
+    const studentProfile: StudentProfile = {
+      id: this.currentProfileId++,
+      userId: studentUser.id,
+      rollNumber: "S12345",
+      department: "Computer Science",
+      year: "3rd Year",
+      course: "B.Tech"
+    };
+    this.studentProfiles.set(studentProfile.id, studentProfile);
+    
+    // Add some sample achievements for the student
+    const achievements: Achievement[] = [
+      {
+        id: this.currentAchievementId++,
+        studentId: studentUser.id,
+        title: "Best Project Award",
+        description: "Received the best project award for innovative web application",
+        type: "academic",
+        dateOfActivity: new Date(2023, 9, 15),
+        proofUrl: "/uploads/sample-certificate.pdf",
+        status: "Verified",
+        feedback: "Excellent work on the project!",
+        lastUpdated: new Date()
+      },
+      {
+        id: this.currentAchievementId++,
+        studentId: studentUser.id,
+        title: "College Cricket Team",
+        description: "Selected for college cricket team and participated in inter-college tournament",
+        type: "sports",
+        dateOfActivity: new Date(2023, 5, 10),
+        proofUrl: "/uploads/cricket-team-selection.pdf",
+        status: "Verified",
+        feedback: "Great contribution to the team",
+        lastUpdated: new Date()
+      },
+      {
+        id: this.currentAchievementId++,
+        studentId: studentUser.id,
+        title: "Web Development Workshop",
+        description: "Organized a web development workshop for junior students",
+        type: "co-curricular",
+        dateOfActivity: new Date(2023, 11, 5),
+        proofUrl: "/uploads/workshop-photos.pdf",
+        status: "Pending",
+        feedback: null,
+        lastUpdated: new Date()
+      }
+    ];
+    
+    // Add the achievements to the Map
+    achievements.forEach(achievement => {
+      this.achievements.set(achievement.id, achievement);
+    });
   }
 
   // User operations
@@ -68,7 +152,12 @@ export class MemStorage implements IStorage {
 
   async createUser(userData: InsertUser): Promise<User> {
     const id = this.currentUserId++;
-    const user: User = { ...userData, id };
+    // Ensure profileImage is not undefined
+    const user: User = { 
+      ...userData, 
+      id,
+      profileImage: userData.profileImage || null
+    };
     this.users.set(id, user);
     return user;
   }
@@ -156,7 +245,10 @@ export class MemStorage implements IStorage {
     const achievement: Achievement = { 
       ...achievementData, 
       id,
-      lastUpdated: new Date()
+      lastUpdated: new Date(),
+      // Ensure required fields have default values if not provided
+      status: achievementData.status || "Submitted",
+      feedback: achievementData.feedback || null
     };
     this.achievements.set(id, achievement);
     return achievement;

@@ -1,4 +1,4 @@
-import { Switch, Route, useLocation } from "wouter";
+import { Switch, Route, useLocation, Redirect } from "wouter";
 import { useEffect } from "react";
 import Login from "@/pages/auth/Login";
 import Register from "@/pages/auth/Register";
@@ -14,103 +14,134 @@ import ManageUsers from "@/pages/admin/ManageUsers";
 import Departments from "@/pages/admin/Departments";
 import Statistics from "@/pages/admin/Statistics";
 import GlobalReports from "@/pages/admin/GlobalReports";
+import ProfilePage from "@/pages/profile";
 import NotFound from "@/pages/not-found";
 import { useAuth } from "@/lib/auth";
-import AppLayout from "@/components/layout/AppLayout";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
-function RouterContent() {
+function App() {
   const { user, isLoading } = useAuth();
   const [location, setLocation] = useLocation();
 
   useEffect(() => {
-    // Redirect to login if not authenticated, except for the register page
-    if (!isLoading && !user && location !== "/register" && !location.startsWith("/login")) {
-      setLocation("/login");
-    }
-
     // Redirect to dashboard if authenticated and trying to access login/register
-    if (!isLoading && user && (location === "/login" || location === "/register")) {
+    if (!isLoading && user && (location === "/auth" || location === "/register")) {
       if (user.role === "student") setLocation("/student/dashboard");
       else if (user.role === "teacher") setLocation("/teacher/dashboard");
       else if (user.role === "admin") setLocation("/admin/dashboard");
     }
   }, [user, isLoading, location, setLocation]);
 
-  // Show loading state
-  if (isLoading) {
-    return <div className="h-screen flex items-center justify-center">Loading...</div>;
-  }
-
   return (
     <Switch>
+      {/* Home Route - Redirect based on authentication status */}
+      <Route path="/">
+        {() => {
+          if (isLoading) {
+            return (
+              <div className="h-screen flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+              </div>
+            );
+          }
+          
+          if (!user) {
+            return <Redirect to="/auth" />;
+          }
+          
+          if (user.role === "student") {
+            return <Redirect to="/student/dashboard" />;
+          } else if (user.role === "teacher") {
+            return <Redirect to="/teacher/dashboard" />;
+          } else if (user.role === "admin") {
+            return <Redirect to="/admin/dashboard" />;
+          }
+          
+          return <Redirect to="/auth" />;
+        }}
+      </Route>
+
       {/* Public Routes */}
-      <Route path="/login" component={Login} />
+      <Route path="/auth" component={Login} />
       <Route path="/register" component={Register} />
 
-      {/* Protected Routes - Only render if user is authenticated */}
-      {user && (
-        <Route path="/:path*">
-          {(params) => {
-            const path = params.path || "";
+      {/* Student Routes */}
+      <ProtectedRoute 
+        path="/student/dashboard" 
+        component={StudentDashboard} 
+        allowedRoles={["student"]} 
+      />
+      <ProtectedRoute 
+        path="/student/upload" 
+        component={UploadAchievement} 
+        allowedRoles={["student"]} 
+      />
+      <ProtectedRoute 
+        path="/student/history" 
+        component={ActivityHistory} 
+        allowedRoles={["student"]} 
+      />
+      <ProtectedRoute 
+        path="/student/reports" 
+        component={Reports} 
+        allowedRoles={["student"]} 
+      />
 
-            // Student Routes
-            if (user.role === "student") {
-              return (
-                <AppLayout>
-                  <Switch>
-                    <Route path="/student/dashboard" component={StudentDashboard} />
-                    <Route path="/student/upload" component={UploadAchievement} />
-                    <Route path="/student/history" component={ActivityHistory} />
-                    <Route path="/student/reports" component={Reports} />
-                    <Route component={NotFound} />
-                  </Switch>
-                </AppLayout>
-              );
-            }
+      {/* Teacher Routes */}
+      <ProtectedRoute 
+        path="/teacher/dashboard" 
+        component={TeacherDashboard} 
+        allowedRoles={["teacher"]} 
+      />
+      <ProtectedRoute 
+        path="/teacher/verify" 
+        component={VerifyActivities} 
+        allowedRoles={["teacher"]} 
+      />
+      <ProtectedRoute 
+        path="/teacher/reports" 
+        component={DepartmentReports} 
+        allowedRoles={["teacher"]} 
+      />
 
-            // Teacher Routes
-            if (user.role === "teacher") {
-              return (
-                <AppLayout>
-                  <Switch>
-                    <Route path="/teacher/dashboard" component={TeacherDashboard} />
-                    <Route path="/teacher/verify" component={VerifyActivities} />
-                    <Route path="/teacher/reports" component={DepartmentReports} />
-                    <Route component={NotFound} />
-                  </Switch>
-                </AppLayout>
-              );
-            }
+      {/* Admin Routes */}
+      <ProtectedRoute 
+        path="/admin/dashboard" 
+        component={AdminDashboard} 
+        allowedRoles={["admin"]} 
+      />
+      <ProtectedRoute 
+        path="/admin/users" 
+        component={ManageUsers} 
+        allowedRoles={["admin"]} 
+      />
+      <ProtectedRoute 
+        path="/admin/departments" 
+        component={Departments} 
+        allowedRoles={["admin"]} 
+      />
+      <ProtectedRoute 
+        path="/admin/statistics" 
+        component={Statistics} 
+        allowedRoles={["admin"]} 
+      />
+      <ProtectedRoute 
+        path="/admin/reports" 
+        component={GlobalReports} 
+        allowedRoles={["admin"]} 
+      />
 
-            // Admin Routes
-            if (user.role === "admin") {
-              return (
-                <AppLayout>
-                  <Switch>
-                    <Route path="/admin/dashboard" component={AdminDashboard} />
-                    <Route path="/admin/users" component={ManageUsers} />
-                    <Route path="/admin/departments" component={Departments} />
-                    <Route path="/admin/statistics" component={Statistics} />
-                    <Route path="/admin/reports" component={GlobalReports} />
-                    <Route component={NotFound} />
-                  </Switch>
-                </AppLayout>
-              );
-            }
-
-            return <NotFound />;
-          }}
-        </Route>
-      )}
+      {/* Profile Route - Accessible by all authenticated users */}
+      <ProtectedRoute 
+        path="/profile" 
+        component={ProfilePage} 
+        allowedRoles={["student", "teacher", "admin"]} 
+      />
 
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>
   );
-}
-
-function App() {
-  return <RouterContent />;
 }
 
 export default App;

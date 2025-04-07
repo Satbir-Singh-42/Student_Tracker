@@ -45,15 +45,39 @@ export default function AchievementForm({
 
   const uploadMutation = useMutation({
     mutationFn: async (data: FormData) => {
+      // Get the token from localStorage
+      const authData = localStorage.getItem('auth');
+      let token = null;
+      
+      if (authData) {
+        try {
+          const parsed = JSON.parse(authData);
+          token = parsed.token;
+        } catch (error) {
+          console.error('Error parsing auth data:', error);
+        }
+      }
+      
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch('/api/achievements', {
         method: 'POST',
         body: data,
         credentials: 'include',
+        headers
       });
       
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(errorText || response.statusText);
+        try {
+          const errorJson = JSON.parse(errorText);
+          throw new Error(errorJson.message || response.statusText);
+        } catch {
+          throw new Error(errorText || response.statusText);
+        }
       }
       
       return await response.json();
