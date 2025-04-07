@@ -56,7 +56,7 @@ export class MemStorage implements IStorage {
       id: this.currentUserId++,
       name: "Admin User",
       email: "admin@example.com",
-      password: "$2b$10$TmVRx9FvuYXDcgMsUDOjO.nA3.2P3eyqvfq/0H3p5iyVXf0o2hVY2", // hashed "password123"
+      password: "password123", // Plain password for demo accounts
       role: "admin",
       profileImage: null
     };
@@ -67,7 +67,7 @@ export class MemStorage implements IStorage {
       id: this.currentUserId++,
       name: "Teacher User",
       email: "teacher@example.com",
-      password: "$2b$10$TmVRx9FvuYXDcgMsUDOjO.nA3.2P3eyqvfq/0H3p5iyVXf0o2hVY2", // hashed "password123"
+      password: "password123", // Plain password for demo accounts
       role: "teacher",
       profileImage: null
     };
@@ -78,7 +78,7 @@ export class MemStorage implements IStorage {
       id: this.currentUserId++,
       name: "Student User",
       email: "student@example.com",
-      password: "$2b$10$TmVRx9FvuYXDcgMsUDOjO.nA3.2P3eyqvfq/0H3p5iyVXf0o2hVY2", // hashed "password123"
+      password: "password123", // Plain password for demo accounts
       role: "student",
       profileImage: null
     };
