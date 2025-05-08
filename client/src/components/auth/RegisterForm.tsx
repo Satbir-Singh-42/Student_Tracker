@@ -216,7 +216,7 @@ export default function RegisterForm() {
       </Form>
       
       <p className="mt-4 text-center text-sm">
-        Already have an account? <Link href="/login" className="text-primary hover:underline">Sign in</Link>
+        Already have an account? <Link href="/auth" className="text-primary hover:underline">Sign in</Link>
       </p>
     </div>
   );
