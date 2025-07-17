@@ -42,8 +42,8 @@ export default function Login() {
         </div>
       </div>
 
-      {/* Login form - Full width on mobile */}
-      <div className="w-full md:flex-1 bg-gray-50 flex items-center justify-center p-6">
+      {/* Login form - Perfectly centered on mobile */}
+      <div className="w-full md:flex-1 bg-gray-50 flex items-center justify-center min-h-screen md:min-h-0 p-4 md:p-6">
         <div className="w-full max-w-md">
           <Card>
             <CardContent className="pt-6">
