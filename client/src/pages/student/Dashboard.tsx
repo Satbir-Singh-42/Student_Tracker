@@ -14,13 +14,13 @@ export default function StudentDashboard() {
   });
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="font-poppins text-2xl font-semibold">Welcome back, {user?.name.split(' ')[0]}!</h1>
-        <p className="text-gray-600 mt-1">Track and manage your academic and extracurricular achievements</p>
+    <div className="p-4 sm:p-6 lg:p-8">
+      <div className="mb-6 lg:mb-8">
+        <h1 className="font-poppins text-xl sm:text-2xl lg:text-3xl font-semibold">Welcome back, {user?.name.split(' ')[0]}!</h1>
+        <p className="text-gray-600 mt-1 text-sm sm:text-base">Track and manage your academic and extracurricular achievements</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
         <StatCard
           title="Total Activities"
           value={isLoading ? '...' : stats?.totalCount || 0}
@@ -60,14 +60,16 @@ export default function StudentDashboard() {
         />
       </div>
 
-      <div className="flex flex-col md:flex-row gap-6">
-        <div className="flex-1">
+      <div className="flex flex-col xl:flex-row gap-6 lg:gap-8">
+        <div className="flex-1 min-w-0">
           <ActivityList />
         </div>
         
-        <div className="md:w-80 lg:w-96">
-          <QuickActions />
-          <ActivityTypeChart />
+        <div className="xl:w-80 2xl:w-96 flex-shrink-0">
+          <div className="space-y-6">
+            <QuickActions />
+            <ActivityTypeChart />
+          </div>
         </div>
       </div>
     </div>

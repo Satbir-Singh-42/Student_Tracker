@@ -71,7 +71,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto bg-gray-50 pt-14 lg:pt-0">
-        {children}
+        <div className="min-h-full">
+          {children}
+        </div>
       </main>
     </div>
   );

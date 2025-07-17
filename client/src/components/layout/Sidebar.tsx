@@ -84,7 +84,7 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
               ? 'text-primary bg-blue-100' 
               : 'text-gray-700 hover:bg-gray-100'}`}
           >
-            <span className="material-icons mr-3">dashboard</span>
+            <Home size={20} className="mr-3" />
             <span>Overview</span>
           </Link>
           <Link 
@@ -93,7 +93,7 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
               ? 'text-primary bg-blue-100' 
               : 'text-gray-700 hover:bg-gray-100'}`}
           >
-            <span className="material-icons mr-3">fact_check</span>
+            <CheckCircle size={20} className="mr-3" />
             <span>Verify Activities</span>
           </Link>
           <Link 
@@ -102,7 +102,7 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
               ? 'text-primary bg-blue-100' 
               : 'text-gray-700 hover:bg-gray-100'}`}
           >
-            <span className="material-icons mr-3">description</span>
+            <FileText size={20} className="mr-3" />
             <span>Department Reports</span>
           </Link>
         </div>
@@ -118,7 +118,7 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
               ? 'text-primary bg-blue-100' 
               : 'text-gray-700 hover:bg-gray-100'}`}
           >
-            <span className="material-icons mr-3">dashboard</span>
+            <Home size={20} className="mr-3" />
             <span>Overview</span>
           </Link>
           <Link 
@@ -127,7 +127,7 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
               ? 'text-primary bg-blue-100' 
               : 'text-gray-700 hover:bg-gray-100'}`}
           >
-            <span className="material-icons mr-3">people</span>
+            <Users size={20} className="mr-3" />
             <span>Manage Users</span>
           </Link>
           <Link 
@@ -136,7 +136,7 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
               ? 'text-primary bg-blue-100' 
               : 'text-gray-700 hover:bg-gray-100'}`}
           >
-            <span className="material-icons mr-3">school</span>
+            <School size={20} className="mr-3" />
             <span>Departments</span>
           </Link>
           <Link 
@@ -145,7 +145,7 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
               ? 'text-primary bg-blue-100' 
               : 'text-gray-700 hover:bg-gray-100'}`}
           >
-            <span className="material-icons mr-3">insights</span>
+            <BarChart3 size={20} className="mr-3" />
             <span>Statistics</span>
           </Link>
           <Link 
@@ -154,7 +154,7 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
               ? 'text-primary bg-blue-100' 
               : 'text-gray-700 hover:bg-gray-100'}`}
           >
-            <span className="material-icons mr-3">description</span>
+            <FileText size={20} className="mr-3" />
             <span>Global Reports</span>
           </Link>
         </div>
@@ -174,7 +174,7 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
           onClick={onLogout}
           className="mt-4 w-full flex items-center justify-center px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-md hover:bg-gray-100"
         >
-          <span className="material-icons text-sm mr-2">logout</span>
+          <LogOut size={16} className="mr-2" />
           Sign Out
         </button>
         <div className="mt-4 pt-4 border-t border-gray-200">

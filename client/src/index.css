@@ -10,4 +10,44 @@
   body {
     @apply font-sans antialiased bg-background text-foreground;
   }
+  
+  /* Better responsive text sizing */
+  h1 { 
+    @apply text-xl sm:text-2xl lg:text-3xl xl:text-4xl; 
+  }
+  
+  h2 { 
+    @apply text-lg sm:text-xl lg:text-2xl; 
+  }
+  
+  h3 { 
+    @apply text-base sm:text-lg lg:text-xl; 
+  }
+}
+
+@layer components {
+  /* Responsive container with proper padding */
+  .container-responsive {
+    @apply px-4 sm:px-6 lg:px-8 xl:px-12;
+  }
+  
+  /* Responsive grid for cards */
+  .card-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6;
+  }
+  
+  /* Responsive button sizes */
+  .btn-responsive {
+    @apply py-2 sm:py-2.5 lg:py-3 px-4 sm:px-5 lg:px-6 text-sm sm:text-base;
+  }
+  
+  /* Responsive form elements */
+  .form-responsive {
+    @apply space-y-4 sm:space-y-6;
+  }
+  
+  /* Better mobile touch targets */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
 }
