@@ -1,5 +1,6 @@
 import { type User, type InsertUser, type StudentProfile, type InsertStudentProfile, type Achievement, type InsertAchievement } from "@shared/schema";
 import { UserModel, StudentProfileModel, AchievementModel } from "./models";
+import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 
 // Define the storage interface
@@ -32,11 +33,33 @@ export interface IStorage {
 
 // MongoDB storage implementation
 export class MongoStorage implements IStorage {
+  private isConnected = false;
+  
   constructor() {
-    // Initialize demo accounts after a short delay to ensure connection
-    setTimeout(() => {
-      this.createDemoAccounts();
-    }, 1000);
+    // Check if MongoDB is connected before creating demo accounts
+    this.checkConnectionAndCreateDemoAccounts();
+  }
+
+  private async checkConnectionAndCreateDemoAccounts() {
+    try {
+      // Wait for MongoDB connection to be established
+      await new Promise((resolve) => {
+        const checkConnection = () => {
+          if (mongoose.connection.readyState === 1) {
+            this.isConnected = true;
+            resolve(true);
+          } else {
+            setTimeout(checkConnection, 100);
+          }
+        };
+        checkConnection();
+      });
+      
+      await this.createDemoAccounts();
+    } catch (error) {
+      console.error('MongoDB connection check failed:', error);
+      this.isConnected = false;
+    }
   }
   
   // Create demo accounts for different roles
@@ -324,4 +347,18 @@ export class MongoStorage implements IStorage {
   }
 }
 
-export const storage = new MongoStorage();
+import { FallbackMemoryStorage } from './fallback-storage';
+
+// Export a function to get the appropriate storage based on MongoDB availability
+export function getStorage(): IStorage {
+  // Check if MongoDB is connected
+  if (mongoose.connection.readyState === 1) {
+    return new MongoStorage();
+  } else {
+    console.log('MongoDB not available, using fallback memory storage');
+    return new FallbackMemoryStorage();
+  }
+}
+
+// Default storage instance
+export const storage = getStorage();
