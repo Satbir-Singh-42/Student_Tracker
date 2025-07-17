@@ -67,21 +67,7 @@ Use this checklist to ensure a successful deployment of the Student Activity Rec
 - [ ] `render.yaml` - Service configuration ✅
 - [ ] Environment variables in Render dashboard
 
-### 🐳 Docker Deployment
 
-#### Prerequisites
-- [ ] Docker installed locally
-- [ ] Container registry account (Docker Hub, etc.)
-
-#### Deployment Steps
-- [ ] Build Docker image: `docker build -t student-platform .`
-- [ ] Test locally: `docker run -p 5000:5000 student-platform`
-- [ ] Push to registry: `docker push your-registry/student-platform`
-- [ ] Deploy to container platform (AWS ECS, Google Cloud Run, etc.)
-
-#### Docker Configuration Files
-- [ ] `Dockerfile` - Container configuration ✅
-- [ ] `.dockerignore` - Files to exclude ✅
 
 ## Post-Deployment Verification
 
@@ -187,11 +173,7 @@ vercel --prod
 git push origin main
 ```
 
-### Docker
-```bash
-docker build -t student-platform .
-docker run -p 5000:5000 student-platform
-```
+
 
 ---
 

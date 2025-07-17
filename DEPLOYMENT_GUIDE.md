@@ -127,23 +127,6 @@ NODE_ENV=production
 CORS_ORIGIN=https://your-app.railway.app
 ```
 
-### Option 4: Heroku
-
-#### Deploy Steps
-```bash
-# Install Heroku CLI
-# Create Heroku app
-heroku create your-app-name
-
-# Set environment variables
-heroku config:set MONGODB_URI="your-mongodb-uri"
-heroku config:set JWT_SECRET="your-jwt-secret"
-heroku config:set NODE_ENV="production"
-
-# Deploy
-git push heroku main
-```
-
 ## 🗄 Database Setup
 
 ### MongoDB Atlas (Recommended)
