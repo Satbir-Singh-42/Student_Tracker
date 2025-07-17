@@ -1,0 +1,17 @@
+node_modules
+.env
+.env.local
+.local
+dist
+uploads
+*.log
+.replit
+.upm
+.config
+.cache
+.vscode
+.git
+README.md
+DEPLOYMENT_GUIDE.md
+build.js
+.local/state/replit/agent/progress_tracker.md

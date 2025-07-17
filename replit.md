@@ -1,0 +1,178 @@
+# Student Activity Record Platform
+
+## Overview
+
+This is a full-stack web application for managing student achievements and activities. Students can upload their academic, co-curricular, and extracurricular achievements with supporting documentation. Teachers can review and verify these submissions, while administrators manage the overall system.
+
+## User Preferences
+
+Preferred communication style: Simple, everyday language.
+
+## System Architecture
+
+### Frontend Architecture
+- **Framework**: React with TypeScript
+- **Build Tool**: Vite for development and production builds
+- **Styling**: Tailwind CSS with shadcn/ui component library
+- **State Management**: Zustand for auth state, TanStack Query for server state
+- **Routing**: Wouter for client-side routing
+- **Form Handling**: React Hook Form with Zod validation
+
+### Backend Architecture
+- **Runtime**: Node.js with Express.js
+- **Language**: TypeScript (ES modules)
+- **Database**: PostgreSQL with Drizzle ORM
+- **Authentication**: JWT tokens with bcrypt for password hashing
+- **File Upload**: Multer for handling file uploads
+- **Validation**: Zod schemas for request validation
+
+## Key Components
+
+### Database Schema
+- **Users**: Base user table with role-based access (student, teacher, admin)
+- **Student Profiles**: Extended profile information for students
+- **Achievements**: Core entity for storing student activities and achievements
+
+### Authentication System
+- JWT-based authentication with role-based access control
+- Protected routes for different user types
+- Persistent login state using localStorage
+
+### File Management
+- File upload system for achievement proofs (PDF, images)
+- 5MB file size limit
+- Secure file storage with unique naming
+
+### User Interface Components
+- Responsive design using Tailwind CSS
+- Professional theme with accessible color scheme
+- Mobile-friendly navigation with collapsible sidebar
+- Form components with validation feedback
+
+## Data Flow
+
+1. **User Authentication**: Login/registration flows with JWT token management
+2. **Student Workflow**: Upload achievements → Teacher review → Status updates
+3. **Teacher Workflow**: Review submissions → Approve/reject with feedback
+4. **Admin Workflow**: Manage users → View system statistics → Generate reports
+
+## External Dependencies
+
+### Frontend Dependencies
+- React ecosystem (React, React DOM, React Hook Form)
+- TanStack Query for server state management
+- Radix UI components for accessible UI primitives
+- Tailwind CSS for styling
+- Lucide React for icons
+
+### Backend Dependencies
+- Express.js for API server
+- Drizzle ORM with PostgreSQL adapter
+- Neon Database for PostgreSQL hosting
+- Multer for file uploads
+- bcrypt for password hashing
+- jsonwebtoken for authentication
+
+## Deployment Strategy
+
+### Development Setup
+- Vite dev server for frontend development
+- tsx for TypeScript execution in development
+- Hot module replacement for fast development cycles
+
+### Production Build
+- Vite builds frontend assets to `dist/public`
+- esbuild bundles server code to `dist/server/index.js`
+- Single production server serves both API and static files
+
+### Database Management
+- Drizzle migrations stored in `./migrations`
+- Database schema defined in `shared/schema.ts`
+- Environment-based database URL configuration
+
+### Key Features
+- Role-based dashboards for different user types
+- Real-time status updates for achievement submissions
+- File upload and management system
+- Responsive design for mobile and desktop
+- Statistics and reporting capabilities
+
+The application follows a standard full-stack pattern with clear separation between client and server code, shared type definitions, and a robust authentication system.
+
+## Deployment Configuration
+
+### Vercel Deployment Ready
+- ✓ Created `vercel.json` configuration for full-stack deployment
+- ✓ Set up proper routing for API and static files
+- ✓ Configured build process for client and server
+- ✓ Added `.vercelignore` for clean deployments
+- ✓ Created comprehensive deployment guide with step-by-step instructions
+- ✓ Configured environment variables handling
+- ✓ Added database connection setup for production
+
+### Deployment Files
+- `vercel.json` - Main Vercel configuration
+- `DEPLOYMENT_GUIDE.md` - Complete deployment instructions
+- `.vercelignore` - Files to exclude from deployment
+- `build.js` - Custom build script for production
+
+### Environment Variables Needed
+- `DATABASE_URL` - PostgreSQL connection string
+- `JWT_SECRET` - Secret key for JWT tokens
+- `NODE_ENV` - Set to "production"
+- `CORS_ORIGIN` - Frontend URL for CORS configuration
+
+## Recent Changes: Latest modifications with dates
+
+### January 2025 - Vercel Deployment Ready
+- ✓ Created serverless API structure at `/api/index.ts` for Vercel
+- ✓ Updated vercel.json with proper build configuration
+- ✓ Added comprehensive Vercel deployment guide
+- ✓ Created .vercelignore for clean deployments
+- ✓ Fixed build process to work with Vercel's system
+- ✓ Set up proper environment variable configuration
+
+### January 2025 - Deployment Configuration & UI Improvements
+- ✓ Prepared complete Vercel deployment configuration
+- ✓ Removed "Demo Accounts" tab from login page for cleaner UI
+- ✓ Maintained demo account buttons in LoginForm component
+- ✓ Created comprehensive deployment guide with database setup
+- ✓ Added production build configuration and scripts
+
+### January 2025 - Comprehensive Codebase Improvements
+- ✓ Created comprehensive constants library with API endpoints and configuration
+- ✓ Implemented enhanced validation schemas with better error messages
+- ✓ Added optimistic mutations for better user experience
+- ✓ Created debounce hooks for performance optimization
+- ✓ Built local storage hooks for persistent client state
+- ✓ Enhanced loading states with professional spinner components
+- ✓ Added comprehensive error boundary for better error handling
+- ✓ Implemented connection status monitoring with real-time feedback
+- ✓ Created reusable pagination components with proper navigation
+- ✓ Built empty state components for better UX
+- ✓ Added data table components with loading and error states
+- ✓ Enhanced server security with rate limiting and input validation
+- ✓ Implemented proper CORS and security headers
+- ✓ Added comprehensive error handling middleware
+- ✓ Fixed trust proxy configuration for rate limiting
+- ✓ Improved async error handling with proper wrapper functions
+- ✓ Added mobile responsiveness hooks
+- ✓ Created network status monitoring for offline support
+
+### January 2025 - Project Migration Completed
+- Successfully migrated project from Replit Agent to standard Replit environment
+- Fixed build directory structure and dependencies
+- Ensured proper client/server separation with security practices
+- Application now runs cleanly on Replit with Express server on port 5000
+- Development workflow uses Vite dev server for frontend hot reloading
+- All packages properly installed and configured
+- Application verified working with all core features functional
+
+### December 2024 - Connectivity Improvements
+- Enhanced TanStack Query configuration with retry logic and exponential backoff
+- Added 30-second timeout for all network requests
+- Implemented connection status indicator in sidebar
+- Added health check endpoint (/api/health) for monitoring connectivity
+- Created error boundary component for better error handling
+- Improved cache management with 5-minute stale time and 10-minute garbage collection
+- Added background refetching on window focus and reconnection
