@@ -21,7 +21,7 @@ Preferred communication style: Simple, everyday language.
 ### Backend Architecture
 - **Runtime**: Node.js with Express.js
 - **Language**: TypeScript (ES modules)
-- **Database**: PostgreSQL with Drizzle ORM
+- **Database**: MongoDB with Mongoose ODM
 - **Authentication**: JWT tokens with bcrypt for password hashing
 - **File Upload**: Multer for handling file uploads
 - **Validation**: Zod schemas for request validation
@@ -67,8 +67,8 @@ Preferred communication style: Simple, everyday language.
 
 ### Backend Dependencies
 - Express.js for API server
-- Drizzle ORM with PostgreSQL adapter
-- Neon Database for PostgreSQL hosting
+- Mongoose ODM with MongoDB adapter
+- MongoDB for database hosting
 - Multer for file uploads
 - bcrypt for password hashing
 - jsonwebtoken for authentication
@@ -86,9 +86,9 @@ Preferred communication style: Simple, everyday language.
 - Single production server serves both API and static files
 
 ### Database Management
-- Drizzle migrations stored in `./migrations`
+- Mongoose models defined in `server/models.ts`
 - Database schema defined in `shared/schema.ts`
-- Environment-based database URL configuration
+- Environment-based database URL configuration (MONGODB_URI)
 
 ### Key Features
 - Role-based dashboards for different user types
@@ -117,12 +117,23 @@ The application follows a standard full-stack pattern with clear separation betw
 - `build.js` - Custom build script for production
 
 ### Environment Variables Needed
-- `DATABASE_URL` - PostgreSQL connection string
+- `MONGODB_URI` - MongoDB connection string
 - `JWT_SECRET` - Secret key for JWT tokens
 - `NODE_ENV` - Set to "production"
 - `CORS_ORIGIN` - Frontend URL for CORS configuration
 
 ## Recent Changes: Latest modifications with dates
+
+### January 2025 - MongoDB Migration & Mobile Optimization
+- ✓ Successfully migrated from PostgreSQL/Drizzle to MongoDB/Mongoose
+- ✓ Updated database schema to use MongoDB ObjectIds
+- ✓ Implemented MongoDB storage layer with proper error handling
+- ✓ Added database connection management with graceful error handling
+- ✓ Verified mobile responsiveness across all components
+- ✓ Confirmed responsive design works on both desktop and mobile devices
+- ✓ Mobile-first layout with collapsible sidebar and touch-friendly navigation
+- ✓ Responsive grid layouts using Tailwind CSS breakpoints
+- ✓ Mobile-optimized forms and components throughout the application
 
 ### January 2025 - Vercel Deployment Ready
 - ✓ Created serverless API structure at `/api/index.ts` for Vercel
