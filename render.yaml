@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: student-activity-platform
+    env: node
+    plan: free
+    buildCommand: npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URI
+        fromDatabase:
+          name: mongodb-atlas
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        sync: false
+
+databases:
+  - name: mongodb-atlas
+    databaseName: student_activity_db
+    user: admin

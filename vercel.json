@@ -1,0 +1,33 @@
+{
+  "version": 2,
+  "buildCommand": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/index.js",
+  "outputDirectory": "dist/public",
+  "builds": [
+    {
+      "src": "dist/index.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/dist/index.js"
+    },
+    {
+      "src": "/uploads/(.*)",
+      "dest": "/uploads/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/dist/public/$1"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "functions": {
+    "dist/index.js": {
+      "maxDuration": 30
+    }
+  }
+}
