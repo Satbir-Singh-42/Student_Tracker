@@ -1,5 +1,17 @@
 import { Link, useLocation } from 'wouter';
 import { User } from '@/lib/types';
+import { 
+  X, 
+  Home, 
+  Upload, 
+  History, 
+  FileText, 
+  CheckCircle, 
+  Users, 
+  School, 
+  BarChart3, 
+  LogOut 
+} from 'lucide-react';
 
 interface MobileSidebarProps {
   user: User;
@@ -26,7 +38,7 @@ export default function MobileSidebar({ user, isOpen, onClose, onLogout }: Mobil
         <div className="p-4 border-b border-gray-200 flex items-center justify-between">
           <h1 className="font-poppins font-semibold text-lg text-primary">StudentRecord</h1>
           <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100">
-            <span className="material-icons">close</span>
+            <X size={20} />
           </button>
         </div>
         
@@ -40,7 +52,7 @@ export default function MobileSidebar({ user, isOpen, onClose, onLogout }: Mobil
                 ? 'text-primary bg-blue-100' 
                 : 'text-gray-700 hover:bg-gray-100'}`}
             >
-              <span className="material-icons mr-3">dashboard</span>
+              <Home size={20} className="mr-3" />
               <span>Overview</span>
             </Link>
             <Link 
@@ -50,7 +62,7 @@ export default function MobileSidebar({ user, isOpen, onClose, onLogout }: Mobil
                 ? 'text-primary bg-blue-100' 
                 : 'text-gray-700 hover:bg-gray-100'}`}
             >
-              <span className="material-icons mr-3">upload_file</span>
+              <Upload size={20} className="mr-3" />
               <span>Upload Achievement</span>
             </Link>
             <Link 
@@ -60,7 +72,7 @@ export default function MobileSidebar({ user, isOpen, onClose, onLogout }: Mobil
                 ? 'text-primary bg-blue-100' 
                 : 'text-gray-700 hover:bg-gray-100'}`}
             >
-              <span className="material-icons mr-3">history</span>
+              <History size={20} className="mr-3" />
               <span>My Activities</span>
             </Link>
             <Link 
@@ -70,7 +82,7 @@ export default function MobileSidebar({ user, isOpen, onClose, onLogout }: Mobil
                 ? 'text-primary bg-blue-100' 
                 : 'text-gray-700 hover:bg-gray-100'}`}
             >
-              <span className="material-icons mr-3">description</span>
+              <FileText size={20} className="mr-3" />
               <span>Reports</span>
             </Link>
           </div>
@@ -86,7 +98,7 @@ export default function MobileSidebar({ user, isOpen, onClose, onLogout }: Mobil
                 ? 'text-primary bg-blue-100' 
                 : 'text-gray-700 hover:bg-gray-100'}`}
             >
-              <span className="material-icons mr-3">dashboard</span>
+              <Home size={20} className="mr-3" />
               <span>Overview</span>
             </Link>
             <Link 
@@ -96,7 +108,7 @@ export default function MobileSidebar({ user, isOpen, onClose, onLogout }: Mobil
                 ? 'text-primary bg-blue-100' 
                 : 'text-gray-700 hover:bg-gray-100'}`}
             >
-              <span className="material-icons mr-3">fact_check</span>
+              <CheckCircle size={20} className="mr-3" />
               <span>Verify Activities</span>
             </Link>
             <Link 
@@ -106,7 +118,7 @@ export default function MobileSidebar({ user, isOpen, onClose, onLogout }: Mobil
                 ? 'text-primary bg-blue-100' 
                 : 'text-gray-700 hover:bg-gray-100'}`}
             >
-              <span className="material-icons mr-3">description</span>
+              <FileText size={20} className="mr-3" />
               <span>Department Reports</span>
             </Link>
           </div>
@@ -122,7 +134,7 @@ export default function MobileSidebar({ user, isOpen, onClose, onLogout }: Mobil
                 ? 'text-primary bg-blue-100' 
                 : 'text-gray-700 hover:bg-gray-100'}`}
             >
-              <span className="material-icons mr-3">dashboard</span>
+              <Home size={20} className="mr-3" />
               <span>Overview</span>
             </Link>
             <Link 
@@ -132,7 +144,7 @@ export default function MobileSidebar({ user, isOpen, onClose, onLogout }: Mobil
                 ? 'text-primary bg-blue-100' 
                 : 'text-gray-700 hover:bg-gray-100'}`}
             >
-              <span className="material-icons mr-3">people</span>
+              <Users size={20} className="mr-3" />
               <span>Manage Users</span>
             </Link>
             <Link 
@@ -142,7 +154,7 @@ export default function MobileSidebar({ user, isOpen, onClose, onLogout }: Mobil
                 ? 'text-primary bg-blue-100' 
                 : 'text-gray-700 hover:bg-gray-100'}`}
             >
-              <span className="material-icons mr-3">school</span>
+              <School size={20} className="mr-3" />
               <span>Departments</span>
             </Link>
             <Link 
@@ -152,7 +164,7 @@ export default function MobileSidebar({ user, isOpen, onClose, onLogout }: Mobil
                 ? 'text-primary bg-blue-100' 
                 : 'text-gray-700 hover:bg-gray-100'}`}
             >
-              <span className="material-icons mr-3">insights</span>
+              <BarChart3 size={20} className="mr-3" />
               <span>Statistics</span>
             </Link>
             <Link 
@@ -162,7 +174,7 @@ export default function MobileSidebar({ user, isOpen, onClose, onLogout }: Mobil
                 ? 'text-primary bg-blue-100' 
                 : 'text-gray-700 hover:bg-gray-100'}`}
             >
-              <span className="material-icons mr-3">description</span>
+              <FileText size={20} className="mr-3" />
               <span>Global Reports</span>
             </Link>
           </div>
@@ -182,7 +194,7 @@ export default function MobileSidebar({ user, isOpen, onClose, onLogout }: Mobil
             onClick={onLogout}
             className="mt-4 w-full flex items-center justify-center px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-md hover:bg-gray-100"
           >
-            <span className="material-icons text-sm mr-2">logout</span>
+            <LogOut size={16} className="mr-2" />
             Sign Out
           </button>
         </div>

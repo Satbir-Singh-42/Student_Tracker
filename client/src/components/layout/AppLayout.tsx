@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth, useLogout } from '@/lib/auth';
+import { Menu, X } from 'lucide-react';
 import Sidebar from './Sidebar';
 import MobileSidebar from './MobileSidebar';
 
@@ -42,7 +43,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
             onClick={() => setIsMobileMenuOpen(true)} 
             className="p-2 rounded-full hover:bg-neutral-200"
           >
-            <span className="material-icons">menu</span>
+            <Menu size={24} />
           </button>
           <h1 className="font-poppins font-semibold text-lg ml-2">Student Activity Record</h1>
         </div>

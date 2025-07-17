@@ -1,6 +1,17 @@
 import { Link, useLocation } from 'wouter';
 import { User } from '@/lib/types';
 import { ConnectionStatusCompact } from '@/components/ui/connection-status';
+import { 
+  Home, 
+  Upload, 
+  History, 
+  FileText, 
+  CheckCircle, 
+  Users, 
+  School, 
+  BarChart3, 
+  LogOut 
+} from 'lucide-react';
 
 interface SidebarProps {
   user: User;
@@ -30,7 +41,7 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
               ? 'text-primary bg-blue-100' 
               : 'text-gray-700 hover:bg-gray-100'}`}
           >
-            <span className="material-icons mr-3">dashboard</span>
+            <Home size={20} className="mr-3" />
             <span>Overview</span>
           </Link>
           <Link 
@@ -39,7 +50,7 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
               ? 'text-primary bg-blue-100' 
               : 'text-gray-700 hover:bg-gray-100'}`}
           >
-            <span className="material-icons mr-3">upload_file</span>
+            <Upload size={20} className="mr-3" />
             <span>Upload Achievement</span>
           </Link>
           <Link 
@@ -48,7 +59,7 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
               ? 'text-primary bg-blue-100' 
               : 'text-gray-700 hover:bg-gray-100'}`}
           >
-            <span className="material-icons mr-3">history</span>
+            <History size={20} className="mr-3" />
             <span>My Activities</span>
           </Link>
           <Link 
@@ -57,7 +68,7 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
               ? 'text-primary bg-blue-100' 
               : 'text-gray-700 hover:bg-gray-100'}`}
           >
-            <span className="material-icons mr-3">description</span>
+            <FileText size={20} className="mr-3" />
             <span>Reports</span>
           </Link>
         </div>
