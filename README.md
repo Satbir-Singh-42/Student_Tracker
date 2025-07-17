@@ -79,7 +79,7 @@ The application includes pre-configured demo accounts for testing:
 
 ## 🚀 Deployment
 
-### Deploy to Vercel (Recommended for Frontend-heavy apps)
+### Deploy to Vercel (Recommended)
 
 **Quick Deploy:**
 ```bash
@@ -90,22 +90,42 @@ vercel --prod
 
 **Or use Vercel Dashboard:**
 1. Visit [vercel.com/new](https://vercel.com/new) and import your repository
-2. Configure environment variables (see detailed guide: [VERCEL_DEPLOY.md](VERCEL_DEPLOY.md))
+2. Configure environment variables:
+   ```
+   MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/database
+   JWT_SECRET=your-super-secret-jwt-key-minimum-32-characters
+   NODE_ENV=production
+   CORS_ORIGIN=https://your-app.vercel.app
+   ```
 3. Deploy automatically with included `vercel.json` configuration
 
-### Deploy to Render (Recommended for Backend-heavy apps)
+### Deploy to Render
 
-**Quick Deploy:**
 1. Visit [render.com](https://render.com) and create a new web service
 2. Connect your repository
 3. Configure build settings:
    - Build Command: `npm run build`
    - Start Command: `npm start`
-4. Set environment variables (see detailed guide: [RENDER_DEPLOY.md](RENDER_DEPLOY.md))
+4. Set environment variables:
+   ```
+   MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/database
+   JWT_SECRET=your-super-secret-jwt-key-minimum-32-characters
+   NODE_ENV=production
+   CORS_ORIGIN=https://your-app.onrender.com
+   PORT=10000
+   ```
+
+### Database Setup (MongoDB Atlas)
+
+1. Create account at [cloud.mongodb.com](https://cloud.mongodb.com)
+2. Create free cluster (M0)
+3. Create database user with read/write permissions
+4. Set network access to `0.0.0.0/0` (allow all IPs)
+5. Get connection string and use as `MONGODB_URI`
 
 **Both platforms include:**
 - Automatic HTTPS certificates
-- Health check monitoring
+- Health check monitoring (`/api/health`)
 - Environment variable management
 - Auto-deploy on git push
 
@@ -198,13 +218,56 @@ vercel --prod
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🆘 Support
+## 🆘 Troubleshooting
 
-If you encounter any issues or have questions:
+### Common Deployment Issues
 
-1. Check the [Issues](../../issues) section for existing solutions
-2. Create a new issue with detailed description
-3. Include error logs and environment details
+**Build fails on Vercel/Render:**
+- Ensure all dependencies are in `package.json`
+- Check that `npm run build` works locally
+- Verify TypeScript compiles without errors
+
+**Database connection fails:**
+- Verify MongoDB URI format is correct
+- Check network access in MongoDB Atlas (allow 0.0.0.0/0)
+- Ensure database user has read/write permissions
+
+**API routes not working:**
+- Check environment variables are set correctly
+- Verify CORS_ORIGIN matches your deployment URL
+- Test health endpoint: `https://your-app.com/api/health`
+
+**File uploads not working:**
+- Files must be under 5MB
+- Only PDF, JPG, PNG formats allowed
+- Check browser console for upload errors
+
+### Development Issues
+
+**Server won't start:**
+```bash
+# Clear dependencies and reinstall
+rm -rf node_modules package-lock.json
+npm install
+npm run dev
+```
+
+**Build issues:**
+```bash
+# Check TypeScript
+npm run check
+
+# Test build process
+npm run build
+```
+
+### Support
+
+If you encounter issues:
+1. Check application logs in your deployment platform
+2. Test the health endpoint: `/api/health`
+3. Verify all environment variables are set
+4. Try the demo accounts to test authentication
 
 ## 🔮 Roadmap
 
