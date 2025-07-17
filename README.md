@@ -79,40 +79,35 @@ The application includes pre-configured demo accounts for testing:
 
 ## 🚀 Deployment
 
-### Deploy to Vercel
+### Deploy to Vercel (Recommended for Frontend-heavy apps)
 
-1. **Connect your repository to Vercel**
-   - Visit [vercel.com](https://vercel.com) and import your repository
+**Quick Deploy:**
+```bash
+npm i -g vercel
+vercel login
+vercel --prod
+```
 
-2. **Configure environment variables**
-   ```
-   MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/database
-   JWT_SECRET=your-super-secret-jwt-key-min-32-chars
-   NODE_ENV=production
-   CORS_ORIGIN=https://your-app.vercel.app
-   ```
+**Or use Vercel Dashboard:**
+1. Visit [vercel.com/new](https://vercel.com/new) and import your repository
+2. Configure environment variables (see detailed guide: [VERCEL_DEPLOY.md](VERCEL_DEPLOY.md))
+3. Deploy automatically with included `vercel.json` configuration
 
-3. **Deploy**
-   - Vercel will automatically deploy using the included `vercel.json` configuration
-   - The build process handles both frontend and backend deployment
+### Deploy to Render (Recommended for Backend-heavy apps)
 
-### Deploy to Render
-
-1. **Connect your repository to Render**
-   - Visit [render.com](https://render.com) and create a new web service
-
-2. **Configure build settings**
+**Quick Deploy:**
+1. Visit [render.com](https://render.com) and create a new web service
+2. Connect your repository
+3. Configure build settings:
    - Build Command: `npm run build`
    - Start Command: `npm start`
-   - The included `render.yaml` file will configure the service automatically
+4. Set environment variables (see detailed guide: [RENDER_DEPLOY.md](RENDER_DEPLOY.md))
 
-3. **Set environment variables**
-   ```
-   MONGODB_URI=your-mongodb-connection-string
-   JWT_SECRET=your-super-secret-jwt-key-min-32-chars
-   NODE_ENV=production
-   CORS_ORIGIN=https://your-app.onrender.com
-   ```
+**Both platforms include:**
+- Automatic HTTPS certificates
+- Health check monitoring
+- Environment variable management
+- Auto-deploy on git push
 
 ## 📁 Project Structure
 
