@@ -1,6 +1,5 @@
 import { Link, useLocation } from 'wouter';
 import { User } from '@/lib/types';
-import { ConnectionStatusCompact } from '@/components/ui/connection-status';
 import { 
   Home, 
   Upload, 
@@ -177,9 +176,7 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
           <LogOut size={16} className="mr-2" />
           Sign Out
         </button>
-        <div className="mt-4 pt-4 border-t border-gray-200">
-          <ConnectionStatusCompact />
-        </div>
+
       </div>
     </aside>
   );
