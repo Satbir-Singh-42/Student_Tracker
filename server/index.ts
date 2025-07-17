@@ -65,7 +65,7 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
-    // Connect to MongoDB
+    // Try to connect to MongoDB (will fallback to memory if not available)
     await connectDB();
     
     // Register API routes

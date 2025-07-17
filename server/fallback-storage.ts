@@ -1,6 +1,33 @@
 import { type User, type InsertUser, type StudentProfile, type InsertStudentProfile, type Achievement, type InsertAchievement } from "@shared/schema";
-import { IStorage } from "./storage";
 import bcrypt from 'bcrypt';
+
+// Storage interface (duplicated to avoid circular import)
+export interface IStorage {
+  // User operations
+  getUser(id: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  updateUser(id: string, user: Partial<User>): Promise<User | undefined>;
+  deleteUser(id: string): Promise<boolean>;
+  getUsers(): Promise<User[]>;
+  getUsersByRole(role: string): Promise<User[]>;
+  getUsersByDepartment(department: string): Promise<User[]>;
+  
+  // Student profile operations
+  getStudentProfile(userId: string): Promise<StudentProfile | undefined>;
+  createStudentProfile(profile: InsertStudentProfile): Promise<StudentProfile>;
+  updateStudentProfile(userId: string, profile: Partial<StudentProfile>): Promise<StudentProfile | undefined>;
+  
+  // Achievement operations
+  getAchievement(id: string): Promise<Achievement | undefined>;
+  getAchievementsByStudent(studentId: string): Promise<Achievement[]>;
+  getAchievementsByDepartment(department: string): Promise<Achievement[]>;
+  getAchievementsByStatus(status: string): Promise<Achievement[]>;
+  createAchievement(achievement: InsertAchievement): Promise<Achievement>;
+  updateAchievement(id: string, achievement: Partial<Achievement>): Promise<Achievement | undefined>;
+  deleteAchievement(id: string): Promise<boolean>;
+  getAllAchievements(): Promise<Achievement[]>;
+}
 
 // In-memory storage implementation for development fallback
 export class FallbackMemoryStorage implements IStorage {

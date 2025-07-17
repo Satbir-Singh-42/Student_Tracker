@@ -1,6 +1,7 @@
 import express, { type Express, type Request, type Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { getMongoDBStatus } from "./database";
 import { z } from "zod";
 import { globalErrorHandler, notFoundHandler, asyncHandler } from "./middleware/errorHandler";
 import { securityHeaders, corsMiddleware, generalLimiter, authLimiter, uploadLimiter } from "./middleware/security";

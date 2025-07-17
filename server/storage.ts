@@ -1,5 +1,7 @@
 import { type User, type InsertUser, type StudentProfile, type InsertStudentProfile, type Achievement, type InsertAchievement } from "@shared/schema";
 import { UserModel, StudentProfileModel, AchievementModel } from "./models";
+import { getMongoDBStatus, checkMongoDBConnection } from './database';
+import { FallbackMemoryStorage } from './fallback-storage';
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 
@@ -31,35 +33,143 @@ export interface IStorage {
   getAllAchievements(): Promise<Achievement[]>;
 }
 
-// MongoDB storage implementation
-export class MongoStorage implements IStorage {
-  private isConnected = false;
+// Hybrid storage implementation that switches between MongoDB and memory
+export class HybridStorage implements IStorage {
+  private mongoStorage: MongoStorage;
+  private fallbackStorage: FallbackMemoryStorage;
   
   constructor() {
-    // Check if MongoDB is connected before creating demo accounts
-    this.checkConnectionAndCreateDemoAccounts();
+    this.mongoStorage = new MongoStorage();
+    this.fallbackStorage = new FallbackMemoryStorage();
+  }
+  
+  private async getActiveStorage(): Promise<IStorage> {
+    const isMongoConnected = await checkMongoDBConnection();
+    const activeStorage = isMongoConnected ? this.mongoStorage : this.fallbackStorage;
+    
+    // Debug logging
+    if (isMongoConnected) {
+      console.log('Using MongoDB storage');
+    } else {
+      console.log('Using fallback memory storage');
+    }
+    
+    return activeStorage;
+  }
+  
+  // User operations
+  async getUser(id: string): Promise<User | undefined> {
+    const storage = await this.getActiveStorage();
+    return storage.getUser(id);
+  }
+  
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const storage = await this.getActiveStorage();
+    return storage.getUserByEmail(email);
+  }
+  
+  async createUser(user: InsertUser): Promise<User> {
+    const storage = await this.getActiveStorage();
+    return storage.createUser(user);
+  }
+  
+  async updateUser(id: string, user: Partial<User>): Promise<User | undefined> {
+    const storage = await this.getActiveStorage();
+    return storage.updateUser(id, user);
+  }
+  
+  async deleteUser(id: string): Promise<boolean> {
+    const storage = await this.getActiveStorage();
+    return storage.deleteUser(id);
+  }
+  
+  async getUsers(): Promise<User[]> {
+    const storage = await this.getActiveStorage();
+    return storage.getUsers();
+  }
+  
+  async getUsersByRole(role: string): Promise<User[]> {
+    const storage = await this.getActiveStorage();
+    return storage.getUsersByRole(role);
+  }
+  
+  async getUsersByDepartment(department: string): Promise<User[]> {
+    const storage = await this.getActiveStorage();
+    return storage.getUsersByDepartment(department);
+  }
+  
+  // Student profile operations
+  async getStudentProfile(userId: string): Promise<StudentProfile | undefined> {
+    const storage = await this.getActiveStorage();
+    return storage.getStudentProfile(userId);
+  }
+  
+  async createStudentProfile(profile: InsertStudentProfile): Promise<StudentProfile> {
+    const storage = await this.getActiveStorage();
+    return storage.createStudentProfile(profile);
+  }
+  
+  async updateStudentProfile(userId: string, profile: Partial<StudentProfile>): Promise<StudentProfile | undefined> {
+    const storage = await this.getActiveStorage();
+    return storage.updateStudentProfile(userId, profile);
+  }
+  
+  // Achievement operations
+  async getAchievement(id: string): Promise<Achievement | undefined> {
+    const storage = await this.getActiveStorage();
+    return storage.getAchievement(id);
+  }
+  
+  async getAchievementsByStudent(studentId: string): Promise<Achievement[]> {
+    const storage = await this.getActiveStorage();
+    return storage.getAchievementsByStudent(studentId);
+  }
+  
+  async getAchievementsByDepartment(department: string): Promise<Achievement[]> {
+    const storage = await this.getActiveStorage();
+    return storage.getAchievementsByDepartment(department);
+  }
+  
+  async getAchievementsByStatus(status: string): Promise<Achievement[]> {
+    const storage = await this.getActiveStorage();
+    return storage.getAchievementsByStatus(status);
+  }
+  
+  async createAchievement(achievement: InsertAchievement): Promise<Achievement> {
+    const storage = await this.getActiveStorage();
+    return storage.createAchievement(achievement);
+  }
+  
+  async updateAchievement(id: string, achievement: Partial<Achievement>): Promise<Achievement | undefined> {
+    const storage = await this.getActiveStorage();
+    return storage.updateAchievement(id, achievement);
+  }
+  
+  async deleteAchievement(id: string): Promise<boolean> {
+    const storage = await this.getActiveStorage();
+    return storage.deleteAchievement(id);
+  }
+  
+  async getAllAchievements(): Promise<Achievement[]> {
+    const storage = await this.getActiveStorage();
+    return storage.getAllAchievements();
+  }
+}
+
+// MongoDB storage implementation
+export class MongoStorage implements IStorage {
+  constructor() {
+    // Create demo accounts when MongoDB is connected
+    this.createDemoAccountsIfConnected();
   }
 
-  private async checkConnectionAndCreateDemoAccounts() {
-    try {
-      // Wait for MongoDB connection to be established
-      await new Promise((resolve) => {
-        const checkConnection = () => {
-          if (mongoose.connection.readyState === 1) {
-            this.isConnected = true;
-            resolve(true);
-          } else {
-            setTimeout(checkConnection, 100);
-          }
-        };
-        checkConnection();
-      });
-      
-      await this.createDemoAccounts();
-    } catch (error) {
-      console.error('MongoDB connection check failed:', error);
-      this.isConnected = false;
-    }
+  private async createDemoAccountsIfConnected() {
+    // Wait a bit for connection to be established, then create demo accounts
+    setTimeout(async () => {
+      if (getMongoDBStatus()) {
+        await this.createDemoAccounts();
+      }
+    }, 1000);
   }
   
   // Create demo accounts for different roles
@@ -347,18 +457,5 @@ export class MongoStorage implements IStorage {
   }
 }
 
-import { FallbackMemoryStorage } from './fallback-storage';
-
-// Export a function to get the appropriate storage based on MongoDB availability
-export function getStorage(): IStorage {
-  // Check if MongoDB is connected
-  if (mongoose.connection.readyState === 1) {
-    return new MongoStorage();
-  } else {
-    console.log('MongoDB not available, using fallback memory storage');
-    return new FallbackMemoryStorage();
-  }
-}
-
-// Default storage instance
-export const storage = getStorage();
+// Create a single instance of HybridStorage
+export const storage = new HybridStorage();
