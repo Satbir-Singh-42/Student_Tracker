@@ -20,8 +20,8 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
-      {/* Hero section */}
-      <div className="flex-1 bg-primary text-white p-8 flex flex-col justify-center items-center md:items-start">
+      {/* Hero section - Hidden on mobile */}
+      <div className="hidden md:flex flex-1 bg-primary text-white p-8 flex-col justify-center items-center md:items-start">
         <div className="max-w-lg mx-auto md:mx-0">
           <h1 className="text-3xl md:text-4xl font-bold mb-4">Student Activity Record Platform</h1>
           <p className="text-xl mb-8">Track, manage, and showcase your academic achievements in one place</p>
@@ -42,8 +42,8 @@ export default function Login() {
         </div>
       </div>
 
-      {/* Login form */}
-      <div className="flex-1 bg-gray-50 flex items-center justify-center p-6">
+      {/* Login form - Full width on mobile */}
+      <div className="w-full md:flex-1 bg-gray-50 flex items-center justify-center p-6">
         <div className="w-full max-w-md">
           <Card>
             <CardContent className="pt-6">
