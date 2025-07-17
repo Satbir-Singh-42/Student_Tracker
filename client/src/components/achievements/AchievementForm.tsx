@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Upload } from 'lucide-react';
 import { achievementSchema } from '@/lib/types';
 
 interface AchievementFormProps {
@@ -258,7 +259,7 @@ export default function AchievementForm({
                     <img src={filePreview} alt="Preview" className="max-h-32 max-w-full" />
                   </div>
                 ) : (
-                  <span className="material-icons text-4xl text-gray-300 mb-2">cloud_upload</span>
+                  <Upload size={48} className="text-gray-300 mb-2" />
                 )}
                 <p className="text-gray-600 text-sm mb-2">
                   {filePreview ? 'Change file:' : 'Drag and drop your file here, or'}
@@ -273,12 +274,12 @@ export default function AchievementForm({
                 <input
                   id="proof-input"
                   type="file"
-                  accept=".jpg,.jpeg,.png,.pdf"
+                  accept=".jpg,.jpeg,.png,.pdf,.csv"
                   className="hidden"
                   onChange={handleFileChange}
                   {...field}
                 />
-                <p className="text-xs text-gray-500 mt-4">Accepted file types: JPG, PNG, PDF (Max size: 5MB)</p>
+                <p className="text-xs text-gray-500 mt-4">Accepted file types: JPG, PNG, PDF, CSV (Max size: 5MB)</p>
               </div>
               <FormMessage />
             </FormItem>

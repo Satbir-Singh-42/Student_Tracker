@@ -78,10 +78,10 @@ export const achievementSchema = z.object({
     { message: "File must be less than 5MB" }
   ).refine(
     (file) => {
-      const validTypes = ["image/jpeg", "image/png", "application/pdf"];
+      const validTypes = ["image/jpeg", "image/png", "application/pdf", "text/csv", "application/vnd.ms-excel"];
       return validTypes.includes(file.type);
     },
-    { message: "File must be JPG, PNG, or PDF" }
+    { message: "File must be JPG, PNG, PDF, or CSV" }
   ),
 });
 
