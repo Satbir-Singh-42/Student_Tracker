@@ -259,7 +259,7 @@ export class MongoStorage implements IStorage {
   async getUser(id: string): Promise<User | undefined> {
     try {
       const user = await UserModel.findById(id);
-      return user ? { ...user.toObject(), _id: user._id.toString() } : undefined;
+      return user ? { ...user.toObject(), id: user._id.toString() } : undefined;
     } catch (error) {
       console.error("Error getting user:", error);
       return undefined;
@@ -269,7 +269,7 @@ export class MongoStorage implements IStorage {
   async getUserByEmail(email: string): Promise<User | undefined> {
     try {
       const user = await UserModel.findOne({ email });
-      return user ? { ...user.toObject(), _id: user._id.toString() } : undefined;
+      return user ? { ...user.toObject(), id: user._id.toString() } : undefined;
     } catch (error) {
       console.error("Error getting user by email:", error);
       return undefined;
@@ -278,12 +278,8 @@ export class MongoStorage implements IStorage {
 
   async createUser(userData: InsertUser): Promise<User> {
     try {
-      const hashedPassword = await bcrypt.hash(userData.password, 10);
-      const user = await UserModel.create({
-        ...userData,
-        password: hashedPassword
-      });
-      return { ...user.toObject(), _id: user._id.toString() };
+      const user = await UserModel.create(userData);
+      return { ...user.toObject(), id: user._id.toString() };
     } catch (error) {
       console.error("Error creating user:", error);
       throw error;
@@ -313,7 +309,7 @@ export class MongoStorage implements IStorage {
   async getUsers(): Promise<User[]> {
     try {
       const users = await UserModel.find();
-      return users.map(user => ({ ...user.toObject(), _id: user._id.toString() }));
+      return users.map(user => ({ ...user.toObject(), id: user._id.toString() }));
     } catch (error) {
       console.error("Error getting users:", error);
       return [];
@@ -323,7 +319,7 @@ export class MongoStorage implements IStorage {
   async getUsersByRole(role: string): Promise<User[]> {
     try {
       const users = await UserModel.find({ role });
-      return users.map(user => ({ ...user.toObject(), _id: user._id.toString() }));
+      return users.map(user => ({ ...user.toObject(), id: user._id.toString() }));
     } catch (error) {
       console.error("Error getting users by role:", error);
       return [];
@@ -356,7 +352,7 @@ export class MongoStorage implements IStorage {
   async createStudentProfile(profileData: InsertStudentProfile): Promise<StudentProfile> {
     try {
       const profile = await StudentProfileModel.create(profileData);
-      return { ...profile.toObject(), _id: profile._id.toString(), userId: profile.userId.toString() };
+      return { ...profile.toObject(), id: profile._id.toString(), userId: profile.userId.toString() };
     } catch (error) {
       console.error("Error creating student profile:", error);
       throw error;
