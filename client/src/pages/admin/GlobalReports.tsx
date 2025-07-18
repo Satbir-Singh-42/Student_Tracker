@@ -104,24 +104,37 @@ export default function GlobalReports() {
     ];
   };
 
-  // Sample data for department comparison
-  const departmentData = [
-    { department: 'Computer Science', academic: 45, sports: 25, cocurricular: 15, extracurricular: 20 },
-    { department: 'Physics', academic: 35, sports: 15, cocurricular: 10, extracurricular: 12 },
-    { department: 'Chemistry', academic: 30, sports: 18, cocurricular: 20, extracurricular: 15 },
-    { department: 'Mathematics', academic: 40, sports: 10, cocurricular: 12, extracurricular: 8 },
-    { department: 'Biology', academic: 25, sports: 30, cocurricular: 25, extracurricular: 18 },
-  ];
+  // Real data preparation for department comparison
+  const prepareDepartmentData = () => {
+    if (!stats) return [];
+    // This will be populated with real data from the database
+    // For now, showing current system totals
+    return [
+      { 
+        department: 'Current System', 
+        academic: stats.typeStats.academic, 
+        sports: stats.typeStats.sports, 
+        cocurricular: stats.typeStats['co-curricular'], 
+        extracurricular: stats.typeStats['extra-curricular'] 
+      }
+    ];
+  };
 
-  // Sample monthly trend data
-  const monthlyTrendData = [
-    { month: 'Jan', verified: 25, rejected: 5, pending: 10 },
-    { month: 'Feb', verified: 35, rejected: 8, pending: 12 },
-    { month: 'Mar', verified: 45, rejected: 10, pending: 15 },
-    { month: 'Apr', verified: 40, rejected: 12, pending: 8 },
-    { month: 'May', verified: 55, rejected: 7, pending: 10 },
-    { month: 'Jun', verified: 60, rejected: 5, pending: 12 },
-  ];
+  // Real data preparation for monthly trends
+  const prepareMonthlyTrendData = () => {
+    if (!stats) return [];
+    // This will be populated with real monthly data from the database
+    // For now, showing current system status
+    const currentMonth = new Date().toLocaleString('default', { month: 'short' });
+    return [
+      { 
+        month: currentMonth, 
+        verified: stats.verifiedCount, 
+        rejected: stats.rejectedCount, 
+        pending: stats.pendingCount 
+      }
+    ];
+  };
 
   // Pie chart colors
   const COLORS = ['#1976d2', '#4caf50', '#ff9800', '#f50057'];
@@ -434,7 +447,7 @@ export default function GlobalReports() {
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={departmentData}
+                    data={prepareDepartmentData()}
                     margin={{ top: 20, right: 30, left: 20, bottom: 70 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" />
@@ -468,7 +481,7 @@ export default function GlobalReports() {
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
-                      data={departmentData.map(d => ({
+                      data={prepareDepartmentData().map(d => ({
                         department: d.department,
                         total: d.academic + d.sports + d.cocurricular + d.extracurricular
                       })).sort((a, b) => b.total - a.total)}
@@ -501,11 +514,7 @@ export default function GlobalReports() {
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={[
-                        { department: 'Computer Science', rate: 85 },
-                        { department: 'Physics', rate: 75 },
-                        { department: 'Chemistry', rate: 82 },
-                        { department: 'Mathematics', rate: 90 },
-                        { department: 'Biology', rate: 78 },
+                        { department: 'Current System', rate: stats?.successRate || 0 }
                       ]}
                       margin={{ top: 20, right: 30, left: 20, bottom: 70 }}
                     >
@@ -538,7 +547,7 @@ export default function GlobalReports() {
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={monthlyTrendData}
+                    data={prepareMonthlyTrendData()}
                     margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" />
@@ -565,18 +574,7 @@ export default function GlobalReports() {
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
                     data={[
-                      { month: 'Jan', current: 45, previous: 30 },
-                      { month: 'Feb', current: 55, previous: 40 },
-                      { month: 'Mar', current: 70, previous: 55 },
-                      { month: 'Apr', current: 60, previous: 45 },
-                      { month: 'May', current: 75, previous: 60 },
-                      { month: 'Jun', current: 85, previous: 70 },
-                      { month: 'Jul', current: 75, previous: 65 },
-                      { month: 'Aug', current: 65, previous: 50 },
-                      { month: 'Sep', current: 90, previous: 75 },
-                      { month: 'Oct', current: 95, previous: 80 },
-                      { month: 'Nov', current: 85, previous: 70 },
-                      { month: 'Dec', current: 100, previous: 85 },
+                      { month: 'Current', current: stats?.totalCount || 0, previous: 0 }
                     ]}
                     margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
                   >
@@ -617,12 +615,13 @@ export default function GlobalReports() {
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
                     data={[
-                      { quarter: 'Q1 2022', academic: 30, sports: 20, cocurricular: 15, extracurricular: 10 },
-                      { quarter: 'Q2 2022', academic: 35, sports: 25, cocurricular: 18, extracurricular: 15 },
-                      { quarter: 'Q3 2022', academic: 40, sports: 30, cocurricular: 22, extracurricular: 18 },
-                      { quarter: 'Q4 2022', academic: 45, sports: 35, cocurricular: 25, extracurricular: 20 },
-                      { quarter: 'Q1 2023', academic: 50, sports: 40, cocurricular: 30, extracurricular: 25 },
-                      { quarter: 'Q2 2023', academic: 60, sports: 45, cocurricular: 35, extracurricular: 30 },
+                      { 
+                        quarter: 'Current', 
+                        academic: stats?.typeStats.academic || 0, 
+                        sports: stats?.typeStats.sports || 0, 
+                        cocurricular: stats?.typeStats['co-curricular'] || 0, 
+                        extracurricular: stats?.typeStats['extra-curricular'] || 0 
+                      }
                     ]}
                     margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
                   >

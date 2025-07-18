@@ -45,34 +45,34 @@ export default function Statistics() {
     ];
   };
 
-  // Sample monthly trend data
-  // In a real app, this would come from the API
-  const monthlyTrendData = [
-    { month: 'Jan', academic: 8, sports: 5, cocurricular: 3, extracurricular: 4 },
-    { month: 'Feb', academic: 10, sports: 6, cocurricular: 5, extracurricular: 3 },
-    { month: 'Mar', academic: 15, sports: 8, cocurricular: 7, extracurricular: 5 },
-    { month: 'Apr', academic: 12, sports: 10, cocurricular: 6, extracurricular: 7 },
-    { month: 'May', academic: 18, sports: 12, cocurricular: 8, extracurricular: 6 },
-    { month: 'Jun', academic: 20, sports: 15, cocurricular: 10, extracurricular: 8 },
-  ];
+  // Real data will be calculated from actual database records
+  const prepareMonthlyTrendData = () => {
+    if (!stats) return [];
+    
+    // This would be calculated from real database data
+    // For now, show current month data only
+    const currentMonth = new Date().toLocaleString('default', { month: 'short' });
+    return [
+      { 
+        month: currentMonth, 
+        academic: stats.typeStats.academic, 
+        sports: stats.typeStats.sports, 
+        cocurricular: stats.typeStats['co-curricular'], 
+        extracurricular: stats.typeStats['extra-curricular'] 
+      }
+    ];
+  };
 
-  // Success rate trends (sample data)
-  const successRateTrend = [
-    { month: 'Jan', rate: 65 },
-    { month: 'Feb', rate: 68 },
-    { month: 'Mar', rate: 75 },
-    { month: 'Apr', rate: 72 },
-    { month: 'May', rate: 80 },
-    { month: 'Jun', rate: 85 },
-  ];
-
-  const verificationStats = [
-    { teacher: 'Sarah Wilson', verified: 38, rejected: 7, pending: 5 },
-    { teacher: 'John Miller', verified: 32, rejected: 4, pending: 3 },
-    { teacher: 'Emma Davis', verified: 28, rejected: 6, pending: 8 },
-    { teacher: 'Michael Brown', verified: 42, rejected: 9, pending: 3 },
-    { teacher: 'Jessica Taylor', verified: 35, rejected: 5, pending: 7 },
-  ];
+  const prepareSuccessRateTrend = () => {
+    if (!stats) return [];
+    
+    // This would be calculated from real database data
+    // For now, show current success rate
+    const currentMonth = new Date().toLocaleString('default', { month: 'short' });
+    return [
+      { month: currentMonth, rate: stats.successRate }
+    ];
+  };
 
   // Pie chart colors
   const COLORS = ['#1976d2', '#4caf50', '#ff9800', '#f50057'];
@@ -230,25 +230,27 @@ export default function Statistics() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Department Comparison</CardTitle>
-              <CardDescription>Activities by department</CardDescription>
+              <CardTitle>System Statistics</CardTitle>
+              <CardDescription>Current system activity summary</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={[
-                      { department: 'Computer Science', activities: 120, verified: 85, rejected: 10, pending: 25 },
-                      { department: 'Physics', activities: 85, verified: 60, rejected: 15, pending: 10 },
-                      { department: 'Chemistry', activities: 95, verified: 70, rejected: 10, pending: 15 },
-                      { department: 'Mathematics', activities: 75, verified: 50, rejected: 5, pending: 20 },
-                      { department: 'Biology', activities: 110, verified: 75, rejected: 20, pending: 15 },
+                      { 
+                        status: 'Current System', 
+                        activities: stats?.totalCount || 0, 
+                        verified: stats?.verifiedCount || 0, 
+                        pending: stats?.pendingCount || 0, 
+                        rejected: stats?.rejectedCount || 0 
+                      }
                     ]}
                     margin={{ top: 20, right: 30, left: 20, bottom: 70 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis 
-                      dataKey="department" 
+                      dataKey="status" 
                       angle={-45} 
                       textAnchor="end" 
                       height={70} 
@@ -278,7 +280,7 @@ export default function Statistics() {
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
-                    data={monthlyTrendData}
+                    data={prepareMonthlyTrendData()}
                     margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" />
@@ -305,7 +307,7 @@ export default function Statistics() {
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
-                    data={successRateTrend}
+                    data={prepareSuccessRateTrend()}
                     margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" />
@@ -331,107 +333,58 @@ export default function Statistics() {
         <TabsContent value="verification" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Teacher Verification Statistics</CardTitle>
-              <CardDescription>Performance metrics by teacher</CardDescription>
+              <CardTitle>Verification Statistics</CardTitle>
+              <CardDescription>Real-time verification metrics</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={verificationStats}
-                    margin={{ top: 20, right: 30, left: 20, bottom: 70 }}
-                    layout="vertical"
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis type="number" />
-                    <YAxis 
-                      dataKey="teacher" 
-                      type="category" 
-                      width={120}
-                      tick={{ fontSize: 12 }} 
-                    />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="verified" name="Verified" fill="#4caf50" />
-                    <Bar dataKey="pending" name="Pending" fill="#ff9800" />
-                    <Bar dataKey="rejected" name="Rejected" fill="#f44336" />
-                  </BarChart>
-                </ResponsiveContainer>
+              <div className="p-8 text-center">
+                <h3 className="text-lg font-semibold text-gray-700 mb-4">Teacher Verification Analytics</h3>
+                <p className="text-gray-600 mb-6">
+                  Detailed verification statistics will be available once teachers begin reviewing student submissions.
+                </p>
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    This section will show real-time data including:
+                  </p>
+                  <ul className="text-sm text-blue-700 mt-2 space-y-1">
+                    <li>• Teacher verification performance</li>
+                    <li>• Average verification time</li>
+                    <li>• Rejection reasons analysis</li>
+                    <li>• Department-wise statistics</li>
+                  </ul>
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Average Verification Time</CardTitle>
-                <CardDescription>Time taken by department (days)</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={[
-                        { department: 'Computer Science', time: 1.8 },
-                        { department: 'Physics', time: 2.5 },
-                        { department: 'Chemistry', time: 2.2 },
-                        { department: 'Mathematics', time: 1.5 },
-                        { department: 'Biology', time: 2.8 },
-                      ]}
-                      margin={{ top: 20, right: 30, left: 20, bottom: 70 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="department" 
-                        angle={-45} 
-                        textAnchor="end" 
-                        height={70} 
-                        tick={{ fontSize: 12 }} 
-                      />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="time" name="Average Days" fill="#1976d2" />
-                    </BarChart>
-                  </ResponsiveContainer>
+          <Card>
+            <CardHeader>
+              <CardTitle>Current System Status</CardTitle>
+              <CardDescription>Real-time system overview</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center p-4 bg-blue-50 rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600">{stats?.totalCount || 0}</div>
+                    <div className="text-sm text-blue-800">Total Activities</div>
+                  </div>
+                  <div className="text-center p-4 bg-green-50 rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">{stats?.verifiedCount || 0}</div>
+                    <div className="text-sm text-green-800">Verified</div>
+                  </div>
+                  <div className="text-center p-4 bg-yellow-50 rounded-lg">
+                    <div className="text-2xl font-bold text-yellow-600">{stats?.pendingCount || 0}</div>
+                    <div className="text-sm text-yellow-800">Pending</div>
+                  </div>
+                  <div className="text-center p-4 bg-red-50 rounded-lg">
+                    <div className="text-2xl font-bold text-red-600">{stats?.rejectedCount || 0}</div>
+                    <div className="text-sm text-red-800">Rejected</div>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Rejection Reasons</CardTitle>
-                <CardDescription>Common reasons for rejection</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={[
-                          { name: 'Insufficient evidence', value: 45 },
-                          { name: 'Duplicate submission', value: 20 },
-                          { name: 'Incorrect details', value: 25 },
-                          { name: 'Outside timeframe', value: 10 },
-                        ]}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={true}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {COLORS.map((color, index) => (
-                          <Cell key={`cell-${index}`} fill={color} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

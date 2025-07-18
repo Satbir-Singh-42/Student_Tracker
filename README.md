@@ -77,18 +77,10 @@ The application includes official accounts for system access:
 - **Teacher 1**: `rajesh.kumar@satvirnagra.com` / `Teacher@2025!`
 - **Teacher 2**: `priya.sharma@satvirnagra.com` / `Teacher@2025!`
 
-### Demo Accounts
-
-For testing and demonstration purposes, separate demo accounts are available:
-
-- **Demo Student**: `demo.student@example.com` / `demo123`
-- **Demo Teacher**: `demo.teacher@example.com` / `demo123`
-- **Demo Administrator**: `demo.admin@example.com` / `demo123`
-
 **Note**: 
 - Students can register directly through the registration page using their own credentials
-- Demo accounts are completely separate from official system data
-- Use demo accounts for testing features without affecting real data
+- All data in the system is real and comes from actual user submissions
+- Charts and statistics reflect genuine system activity
 
 ## 🚀 Deployment
 
