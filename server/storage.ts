@@ -34,54 +34,48 @@ export interface IStorage {
 // MongoDB storage implementation
 export class MongoStorage implements IStorage {
   
-  private async createDemoAccounts() {
+  private async createOfficialAccounts() {
     try {
-      // Check if demo accounts already exist
-      const existingAdmin = await UserModel.findOne({ email: "admin@example.com" });
+      // Check if official accounts already exist
+      const existingAdmin = await UserModel.findOne({ email: "admin@satvirnagra.com" });
       if (existingAdmin) {
-        console.log("Demo accounts already exist");
+        console.log("Official accounts already exist");
         return;
       }
 
-      // Hash password for demo accounts
-      const hashedPassword = await bcrypt.hash("password123", 10);
+      // Hash password for official accounts
+      const adminPassword = await bcrypt.hash("Admin@2025!", 10);
+      const teacherPassword = await bcrypt.hash("Teacher@2025!", 10);
 
       // Create admin user
       const adminUser = await UserModel.create({
-        name: "Admin User",
-        email: "admin@example.com",
-        password: hashedPassword,
+        name: "System Administrator",
+        email: "admin@satvirnagra.com",
+        password: adminPassword,
         role: "admin"
       });
 
-      // Create teacher user
-      const teacherUser = await UserModel.create({
-        name: "Teacher User",
-        email: "teacher@example.com",
-        password: hashedPassword,
+      // Create teacher users
+      const teacher1 = await UserModel.create({
+        name: "Dr. Rajesh Kumar",
+        email: "rajesh.kumar@satvirnagra.com",
+        password: teacherPassword,
         role: "teacher"
       });
 
-      // Create student user
-      const studentUser = await UserModel.create({
-        name: "Student User",
-        email: "student@example.com",
-        password: hashedPassword,
-        role: "student"
+      const teacher2 = await UserModel.create({
+        name: "Prof. Priya Sharma",
+        email: "priya.sharma@satvirnagra.com",
+        password: teacherPassword,
+        role: "teacher"
       });
 
-      // Create student profile
-      await StudentProfileModel.create({
-        userId: studentUser._id,
-        rollNumber: "STU001",
-        department: "Computer Science",
-        year: "third",
-        course: "B.Tech"
-      });
-
-      console.log("Demo accounts created successfully");
+      console.log("Official accounts created successfully");
+      console.log("Admin: admin@satvirnagra.com / Admin@2025!");
+      console.log("Teacher 1: rajesh.kumar@satvirnagra.com / Teacher@2025!");
+      console.log("Teacher 2: priya.sharma@satvirnagra.com / Teacher@2025!");
     } catch (error) {
-      console.error("Error creating demo accounts:", error);
+      console.error("Error creating official accounts:", error);
     }
   }
 
@@ -290,9 +284,9 @@ export class MongoStorage implements IStorage {
 // Create storage instance
 export const createStorage = (): IStorage => {
   const storage = new MongoStorage();
-  // Create demo accounts when storage is initialized
+  // Create official accounts when storage is initialized
   setTimeout(() => {
-    (storage as any).createDemoAccounts();
+    (storage as any).createOfficialAccounts();
   }, 1000);
   return storage;
 };

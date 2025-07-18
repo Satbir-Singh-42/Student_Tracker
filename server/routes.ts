@@ -122,16 +122,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid email or password" });
       }
 
-      // Check if this is a demo account (non-hashed password)
-      let isPasswordValid = false;
-      
-      // For demo accounts, we'll do a direct comparison
-      if (user.email.includes('@example.com') && user.password === validatedData.password) {
-        isPasswordValid = true;
-      } else {
-        // For regular accounts, compare with bcrypt
-        isPasswordValid = await bcrypt.compare(validatedData.password, user.password);
-      }
+      // Compare password with bcrypt
+      const isPasswordValid = await bcrypt.compare(validatedData.password, user.password);
       
       if (!isPasswordValid) {
         return res.status(401).json({ message: "Invalid email or password" });

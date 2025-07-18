@@ -53,12 +53,12 @@ A comprehensive full-stack web application for managing student achievements and
    npm install
    ```
 
-3. **Environment setup** (optional for development)
+3. **Environment setup** (required for production)
    ```bash
    cp .env.example .env
    ```
    
-   For local development, the app will automatically use in-memory storage if MongoDB is not available. This includes demo accounts for testing all features.
+   Update the `.env` file with your MongoDB connection string and other configuration values.
 
 4. **Start development server**
    ```bash
@@ -67,15 +67,17 @@ A comprehensive full-stack web application for managing student achievements and
 
 5. **Access the application**
    - Open http://localhost:5000 in your browser
-   - Use demo accounts to test functionality
+   - Use official credentials to access the system
 
-### Demo Accounts
+### Official Credentials
 
-The application includes pre-configured demo accounts for testing:
+The application includes official accounts for system access:
 
-- **Student**: `student@example.com` / `password123`
-- **Teacher**: `teacher@example.com` / `password123` 
-- **Administrator**: `admin@example.com` / `password123`
+- **Administrator**: `admin@satvirnagra.com` / `Admin@2025!`
+- **Teacher 1**: `rajesh.kumar@satvirnagra.com` / `Teacher@2025!`
+- **Teacher 2**: `priya.sharma@satvirnagra.com` / `Teacher@2025!`
+
+**Note**: Students can register directly through the registration page using their own credentials.
 
 ## 🚀 Deployment
 
