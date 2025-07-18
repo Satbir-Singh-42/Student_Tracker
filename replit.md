@@ -127,7 +127,6 @@ The application follows a standard full-stack pattern with clear separation betw
 ### January 2025 - Complete Demo Data Removal & Real Data Implementation
 - ✓ Completely removed all demo accounts and fake data from the system
 - ✓ Eliminated demo account creation functionality from storage layer
-- ✓ Removed demo account quick-login buttons from login form
 - ✓ Updated all chart components to display only real database data
 - ✓ Fixed Statistics.tsx to show current system data instead of sample data
 - ✓ Updated GlobalReports.tsx to use real data for all charts and trends
@@ -135,6 +134,7 @@ The application follows a standard full-stack pattern with clear separation betw
 - ✓ Updated README to reflect clean production system without demo accounts
 - ✓ Charts now show current month/system data instead of historical fake data
 - ✓ All statistics and analytics reflect genuine user activity only
+- ✓ Added demo quick-login buttons back to login form for easy testing with official accounts
 
 ### January 2025 - MongoDB Integration & Render Deployment Ready
 - ✓ Created comprehensive MongoDB setup guide (MONGODB_SETUP.md)

@@ -26,6 +26,11 @@ export default function LoginForm() {
     login(values);
   }
 
+  function setDemoAccount(email: string, password: string) {
+    form.setValue('email', email);
+    form.setValue('password', password);
+  }
+
 
 
   return (
@@ -104,7 +109,41 @@ export default function LoginForm() {
             ) : 'Sign In'}
           </Button>
 
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-gray-300"></span>
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2 text-gray-500">Quick Demo Login</span>
+            </div>
+          </div>
 
+          <div className="grid grid-cols-3 gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="text-xs"
+              onClick={() => setDemoAccount('priya.sharma@satvirnagra.com', 'Teacher@2025!')}
+            >
+              Student View
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="text-xs"
+              onClick={() => setDemoAccount('rajesh.kumar@satvirnagra.com', 'Teacher@2025!')}
+            >
+              Teacher
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="text-xs"
+              onClick={() => setDemoAccount('admin@satvirnagra.com', 'Admin@2025!')}
+            >
+              Admin
+            </Button>
+          </div>
 
         </form>
       </Form>
