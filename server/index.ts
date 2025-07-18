@@ -73,11 +73,13 @@ app.use((req, res, next) => {
 
     // Serve static files in production
     if (process.env.NODE_ENV === 'production') {
-      app.use(express.static(path.join(__dirname, '../dist/public')));
+      // When server runs from dist/server/index.js, static files are at dist/public
+      const publicPath = path.join(__dirname, '../public');
+      app.use(express.static(publicPath));
       
       // Serve React app for all other routes
       app.get('*', (req, res) => {
-        res.sendFile(path.join(__dirname, '../dist/public/index.html'));
+        res.sendFile(path.join(publicPath, 'index.html'));
       });
     } else {
       // In development, let Vite handle the frontend

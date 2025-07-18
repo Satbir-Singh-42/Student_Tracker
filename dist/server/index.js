@@ -1163,9 +1163,10 @@ app.use((req, res, next) => {
     await database_default();
     await registerRoutes(app);
     if (process.env.NODE_ENV === "production") {
-      app.use(express3.static(path4.join(__dirname, "../dist/public")));
+      const publicPath = path4.join(__dirname, "../public");
+      app.use(express3.static(publicPath));
       app.get("*", (req, res) => {
-        res.sendFile(path4.join(__dirname, "../dist/public/index.html"));
+        res.sendFile(path4.join(publicPath, "index.html"));
       });
     } else {
       const { setupVite: setupVite2 } = await init_vite().then(() => vite_exports);
