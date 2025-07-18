@@ -313,15 +313,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
-      // Define protected admin accounts (both real and demo)
-      const protectedAdminEmails = [
+      // Define protected accounts (both real and demo)
+      const protectedEmails = [
         "admin@satvirnagra.com",
-        "demo.admin@example.com"
+        "demo.admin@example.com",
+        "demo.teacher@example.com",
+        "demo.student@example.com"
       ];
 
-      // Check if this is a protected admin account
-      if (user.role === "admin" && protectedAdminEmails.includes(user.email)) {
-        return res.status(403).json({ message: "Cannot edit protected admin account" });
+      // Check if this is a protected account
+      if (protectedEmails.includes(user.email)) {
+        return res.status(403).json({ message: "Cannot edit protected account" });
       }
 
       const updatedUser = await storage.updateUser(userId, req.body);
@@ -352,15 +354,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
-      // Define protected admin accounts (both real and demo)
-      const protectedAdminEmails = [
+      // Define protected accounts (both real and demo)
+      const protectedEmails = [
         "admin@satvirnagra.com",
-        "demo.admin@example.com"
+        "demo.admin@example.com",
+        "demo.teacher@example.com",
+        "demo.student@example.com"
       ];
 
-      // Check if this is a protected admin account
-      if (user.role === "admin" && protectedAdminEmails.includes(user.email)) {
-        return res.status(403).json({ message: "Cannot delete protected admin account" });
+      // Check if this is a protected account
+      if (protectedEmails.includes(user.email)) {
+        return res.status(403).json({ message: "Cannot delete protected account" });
       }
       
       const success = await storage.deleteUser(userId);

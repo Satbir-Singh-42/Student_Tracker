@@ -183,20 +183,22 @@ export default function UserManagement() {
     }
   };
 
-  // Helper function to check if user is a protected admin
-  const isProtectedAdmin = (user: User): boolean => {
-    const protectedAdminEmails = [
+  // Helper function to check if user is a protected account
+  const isProtectedAccount = (user: User): boolean => {
+    const protectedEmails = [
       "admin@satvirnagra.com",
-      "demo.admin@example.com"
+      "demo.admin@example.com",
+      "demo.teacher@example.com",
+      "demo.student@example.com"
     ];
-    return user.role === "admin" && protectedAdminEmails.includes(user.email);
+    return protectedEmails.includes(user.email);
   };
 
   const openEditDialog = (user: User) => {
-    if (isProtectedAdmin(user)) {
+    if (isProtectedAccount(user)) {
       toast({
         title: 'Access Denied',
-        description: 'Cannot edit protected admin account',
+        description: 'Cannot edit protected account',
         variant: 'destructive',
       });
       return;
@@ -211,10 +213,10 @@ export default function UserManagement() {
   };
 
   const openDeleteDialog = (user: User) => {
-    if (isProtectedAdmin(user)) {
+    if (isProtectedAccount(user)) {
       toast({
         title: 'Access Denied',
-        description: 'Cannot delete protected admin account',
+        description: 'Cannot delete protected account',
         variant: 'destructive',
       });
       return;
@@ -348,30 +350,30 @@ export default function UserManagement() {
                       <Button 
                         variant="ghost" 
                         className={`${
-                          isProtectedAdmin(user) 
+                          isProtectedAccount(user) 
                             ? 'text-gray-400 cursor-not-allowed' 
                             : 'text-primary hover:text-blue-800'
                         } mr-3`}
                         onClick={() => openEditDialog(user)}
-                        disabled={isProtectedAdmin(user)}
-                        title={isProtectedAdmin(user) ? "Protected admin account cannot be edited" : "Edit user"}
+                        disabled={isProtectedAccount(user)}
+                        title={isProtectedAccount(user) ? "Protected account cannot be edited" : "Edit user"}
                       >
                         Edit
                       </Button>
                       <Button 
                         variant="ghost" 
                         className={`${
-                          user.id === currentUser?.id || isProtectedAdmin(user)
+                          user.id === currentUser?.id || isProtectedAccount(user)
                             ? 'text-gray-400 cursor-not-allowed' 
                             : 'text-red-600 hover:text-red-800'
                         }`}
-                        onClick={() => user.id !== currentUser?.id && !isProtectedAdmin(user) && openDeleteDialog(user)}
-                        disabled={user.id === currentUser?.id || isProtectedAdmin(user)}
+                        onClick={() => user.id !== currentUser?.id && !isProtectedAccount(user) && openDeleteDialog(user)}
+                        disabled={user.id === currentUser?.id || isProtectedAccount(user)}
                         title={
                           user.id === currentUser?.id 
                             ? "You cannot delete your own account" 
-                            : isProtectedAdmin(user)
-                              ? "Protected admin account cannot be deleted"
+                            : isProtectedAccount(user)
+                              ? "Protected account cannot be deleted"
                               : "Delete user"
                         }
                       >
