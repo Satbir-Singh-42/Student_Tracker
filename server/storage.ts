@@ -133,6 +133,9 @@ export class MongoStorage implements IStorage {
         course: "B.Tech"
       });
 
+      // Create demo achievements for the student
+      await this.createDemoAchievements(demoStudentUser._id.toString());
+
       console.log("Demo accounts created successfully");
       console.log("Demo Admin: demo.admin@example.com / demo123");
       console.log("Demo Teacher: demo.teacher@example.com / demo123");
@@ -443,6 +446,44 @@ export class MongoStorage implements IStorage {
     } catch (error) {
       console.error("Error getting all departments:", error);
       return [];
+    }
+  }
+
+  private async createDemoAchievements(studentId: string) {
+    try {
+      // Check if demo achievements already exist
+      const existingAchievements = await AchievementModel.countDocuments({ studentId });
+      if (existingAchievements > 0) {
+        console.log("Demo achievements already exist");
+        return;
+      }
+
+      // Create demo achievements with the provided certificates
+      const demoAchievements = [
+        {
+          studentId,
+          title: "Bachelor of Science Degree",
+          description: "Graduation certificate for Bachelor of Science degree from Maxwell International School. Awarded to Richard Sanchez on June 30, 2030.",
+          type: "academic",
+          dateOfActivity: new Date("2030-06-30"),
+          proofUrl: "/uploads/degree_demo_student.pdf",
+          status: "Verified"
+        },
+        {
+          studentId,
+          title: "National Health Seminar Participation",
+          description: "Certificate of participation in National Seminars on 'Health' hosted by the University Of Aldenaire. Awarded to Anna Katrina Marchesi on November 22, 2023.",
+          type: "co-curricular",
+          dateOfActivity: new Date("2023-11-22"),
+          proofUrl: "/uploads/participation_demo_student.pdf",
+          status: "Verified"
+        }
+      ];
+
+      await AchievementModel.insertMany(demoAchievements);
+      console.log("Demo achievements created successfully");
+    } catch (error) {
+      console.error("Error creating demo achievements:", error);
     }
   }
 
