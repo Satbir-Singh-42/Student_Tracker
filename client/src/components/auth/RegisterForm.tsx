@@ -21,6 +21,7 @@ export default function RegisterForm() {
       confirmPassword: '',
       rollNumber: '',
       department: '',
+      branch: '',
       year: '',
       course: '',
       role: 'student',
@@ -105,11 +106,33 @@ export default function RegisterForm() {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="computer-science">Computer Science</SelectItem>
-                    <SelectItem value="physics">Physics</SelectItem>
-                    <SelectItem value="chemistry">Chemistry</SelectItem>
-                    <SelectItem value="mathematics">Mathematics</SelectItem>
-                    <SelectItem value="biology">Biology</SelectItem>
+                    <SelectItem value="Engineering">Engineering</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="branch"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Branch</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select your branch" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="Computer Science and Engineering">Computer Science and Engineering</SelectItem>
+                    <SelectItem value="Electrical Engineering">Electrical Engineering</SelectItem>
+                    <SelectItem value="Information Technology">Information Technology</SelectItem>
+                    <SelectItem value="Electronics and Communication Engineering">Electronics and Communication Engineering</SelectItem>
+                    <SelectItem value="Civil Engineering">Civil Engineering</SelectItem>
+                    <SelectItem value="Mechanical Engineering">Mechanical Engineering</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -154,12 +177,8 @@ export default function RegisterForm() {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="btech">B.Tech</SelectItem>
-                    <SelectItem value="be">B.E.</SelectItem>
-                    <SelectItem value="bsc">B.Sc.</SelectItem>
-                    <SelectItem value="mtech">M.Tech</SelectItem>
-                    <SelectItem value="msc">M.Sc.</SelectItem>
-                    <SelectItem value="phd">Ph.D</SelectItem>
+                    <SelectItem value="B.Tech">B.Tech</SelectItem>
+                    <SelectItem value="M.Tech">M.Tech</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />

@@ -27,6 +27,10 @@ const userSchema = new mongoose.Schema({
   profileImage: {
     type: String,
     default: null
+  },
+  specialization: {
+    type: String,
+    default: null  // For teachers - their expertise branch
   }
 }, {
   timestamps: true
@@ -46,6 +50,11 @@ const studentProfileSchema = new mongoose.Schema({
     trim: true
   },
   department: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  branch: {
     type: String,
     required: true,
     trim: true

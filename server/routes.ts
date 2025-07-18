@@ -194,6 +194,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: newUser.id,
         rollNumber: validatedData.rollNumber,
         department: validatedData.department,
+        branch: validatedData.branch,
         year: validatedData.year,
         course: validatedData.course
       };
@@ -293,6 +294,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId: newUser.id,
           rollNumber: studentData.rollNumber,
           department: studentData.department,
+          branch: studentData.branch,
           year: studentData.year,
           course: studentData.course
         };
@@ -948,6 +950,111 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedProfile);
     } catch (error) {
       res.status(500).json({ message: "Failed to remove teacher assignment" });
+    }
+  });
+
+  // Auto-assign teacher based on student's branch (Admin only)
+  app.post("/api/student-profiles/:studentId/auto-assign-teacher", authenticateToken, checkRole(["admin"]), async (req, res) => {
+    try {
+      const { studentId } = req.params;
+      const updatedProfile = await storage.autoAssignTeacherByBranch(studentId);
+      if (!updatedProfile) {
+        return res.status(404).json({ message: "Student profile not found or no suitable teacher available" });
+      }
+
+      res.json({
+        message: "Teacher auto-assigned successfully based on branch",
+        profile: updatedProfile
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to auto-assign teacher" });
+    }
+  });
+
+  // Search Routes
+
+  // Search users (Admin only)
+  app.get("/api/search/users", authenticateToken, checkRole(["admin"]), async (req, res) => {
+    try {
+      const { q: query } = req.query;
+      if (!query || typeof query !== 'string') {
+        return res.status(400).json({ message: "Search query is required" });
+      }
+
+      const users = await storage.searchUsers(query);
+      
+      // Filter users based on admin type (demo vs production)
+      const isDemoAdmin = req.user.email.includes('demo.') && req.user.email.includes('@example.com');
+      const filteredUsers = users.filter(user => {
+        const isUserDemo = user.email.includes('demo.') && user.email.includes('@example.com');
+        return isDemoAdmin ? isUserDemo : !isUserDemo;
+      });
+
+      res.json(filteredUsers.map(user => ({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        specialization: user.specialization
+      })));
+    } catch (error) {
+      res.status(500).json({ message: "Failed to search users" });
+    }
+  });
+
+  // Search student profiles (Admin only)
+  app.get("/api/search/student-profiles", authenticateToken, checkRole(["admin"]), async (req, res) => {
+    try {
+      const { q: query } = req.query;
+      if (!query || typeof query !== 'string') {
+        return res.status(400).json({ message: "Search query is required" });
+      }
+
+      const profiles = await storage.searchStudentProfiles(query);
+      
+      // Filter profiles based on admin type (demo vs production)
+      const isDemoAdmin = req.user.email.includes('demo.') && req.user.email.includes('@example.com');
+      if (isDemoAdmin) {
+        const demoUsers = await storage.getUsers();
+        const demoUserIds = demoUsers
+          .filter(user => user.email.includes('demo.') && user.email.includes('@example.com'))
+          .map(user => user.id);
+        const filteredProfiles = profiles.filter(profile => demoUserIds.includes(profile.userId));
+        res.json(filteredProfiles);
+      } else {
+        const productionUsers = await storage.getUsers();
+        const productionUserIds = productionUsers
+          .filter(user => !(user.email.includes('demo.') && user.email.includes('@example.com')))
+          .map(user => user.id);
+        const filteredProfiles = profiles.filter(profile => productionUserIds.includes(profile.userId));
+        res.json(filteredProfiles);
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Failed to search student profiles" });
+    }
+  });
+
+  // Get teachers by specialization (Admin only)
+  app.get("/api/teachers/by-specialization/:specialization", authenticateToken, checkRole(["admin"]), async (req, res) => {
+    try {
+      const { specialization } = req.params;
+      const teachers = await storage.getTeachersBySpecialization(specialization);
+      
+      // Filter teachers based on admin type (demo vs production)
+      const isDemoAdmin = req.user.email.includes('demo.') && req.user.email.includes('@example.com');
+      const filteredTeachers = teachers.filter(teacher => {
+        const isTeacherDemo = teacher.email.includes('demo.') && teacher.email.includes('@example.com');
+        return isDemoAdmin ? isTeacherDemo : !isTeacherDemo;
+      });
+
+      res.json(filteredTeachers.map(teacher => ({
+        id: teacher.id,
+        name: teacher.name,
+        email: teacher.email,
+        specialization: teacher.specialization
+      })));
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch teachers by specialization" });
     }
   });
 

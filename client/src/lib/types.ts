@@ -14,6 +14,7 @@ export interface StudentProfile {
   userId: number;
   rollNumber: string;
   department: string;
+  branch: string;
   year: string;
   course: string;
 }
@@ -57,6 +58,7 @@ export const studentRegisterSchema = z.object({
   role: z.enum(["student", "teacher", "admin"]).default("student"),
   rollNumber: z.string().min(1, { message: "Roll number is required" }),
   department: z.string().min(1, { message: "Department is required" }),
+  branch: z.string().min(1, { message: "Branch is required" }),
   year: z.string().min(1, { message: "Year is required" }),
   course: z.string().min(1, { message: "Course is required" }),
 }).refine(data => data.password === data.confirmPassword, {

@@ -7,6 +7,7 @@ export const insertUserSchema = z.object({
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
   role: z.enum(["student", "teacher", "admin"]),
   profileImage: z.string().optional(),
+  specialization: z.string().optional(), // For teachers - their expertise branch
 });
 
 // Student Profile Model Schema
@@ -14,6 +15,7 @@ export const insertStudentProfileSchema = z.object({
   userId: z.string().min(1, { message: "User ID is required" }),
   rollNumber: z.string().min(1, { message: "Roll number is required" }),
   department: z.string().min(1, { message: "Department is required" }),
+  branch: z.string().min(1, { message: "Branch is required" }),
   year: z.string().min(1, { message: "Year is required" }),
   course: z.string().min(1, { message: "Course is required" }),
   assignedTeacher: z.string().optional(),
@@ -61,6 +63,7 @@ export const studentRegisterSchema = z.object({
   profileImage: z.string().optional(),
   rollNumber: z.string().min(1, { message: "Roll number is required" }),
   department: z.string().min(1, { message: "Department is required" }),
+  branch: z.string().min(1, { message: "Branch is required" }),
   year: z.string().min(1, { message: "Year is required" }),
   course: z.string().min(1, { message: "Course is required" }),
 }).refine(data => data.password === data.confirmPassword, {
@@ -76,6 +79,7 @@ export type User = {
   password: string;
   role: "student" | "teacher" | "admin";
   profileImage?: string;
+  specialization?: string; // For teachers - their expertise branch
   createdAt: Date;
   updatedAt: Date;
 };
@@ -85,6 +89,7 @@ export type StudentProfile = {
   userId: string;
   rollNumber: string;
   department: string;
+  branch: string;
   year: string;
   course: string;
   assignedTeacher?: string;

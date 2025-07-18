@@ -14,6 +14,8 @@ export interface IStorage {
   getUsers(): Promise<User[]>;
   getUsersByRole(role: string): Promise<User[]>;
   getUsersByDepartment(department: string): Promise<User[]>;
+  searchUsers(query: string): Promise<User[]>;
+  getTeachersBySpecialization(specialization: string): Promise<User[]>;
   
   // Student profile operations
   getStudentProfile(userId: string): Promise<StudentProfile | undefined>;
@@ -23,6 +25,8 @@ export interface IStorage {
   getStudentsByTeacher(teacherId: string): Promise<StudentProfile[]>;
   assignTeacherToStudent(studentProfileId: string, teacherId: string): Promise<StudentProfile | undefined>;
   removeTeacherFromStudent(studentProfileId: string): Promise<StudentProfile | undefined>;
+  searchStudentProfiles(query: string): Promise<StudentProfile[]>;
+  autoAssignTeacherByBranch(studentProfileId: string): Promise<StudentProfile | undefined>;
   
   // Achievement operations
   getAchievement(id: string): Promise<Achievement | undefined>;
@@ -68,19 +72,21 @@ export class MongoStorage implements IStorage {
         role: "admin"
       });
 
-      // Create teacher users
+      // Create teacher users with specializations
       const teacher1 = await UserModel.create({
         name: "Dr. Rajesh Kumar",
         email: "rajesh.kumar@satvirnagra.com",
         password: teacherPassword,
-        role: "teacher"
+        role: "teacher",
+        specialization: "Computer Science and Engineering"
       });
 
       const teacher2 = await UserModel.create({
         name: "Prof. Priya Sharma",
         email: "priya.sharma@satvirnagra.com",
         password: teacherPassword,
-        role: "teacher"
+        role: "teacher",
+        specialization: "Information Technology"
       });
 
       console.log("Official accounts created successfully");
@@ -112,12 +118,29 @@ export class MongoStorage implements IStorage {
         role: "admin"
       });
 
-      // Create demo teacher user
+      // Create demo teacher users with specializations
       const demoTeacherUser = await UserModel.create({
-        name: "Demo Teacher",
+        name: "Demo Teacher - CSE",
         email: "demo.teacher@example.com",
         password: demoPassword,
-        role: "teacher"
+        role: "teacher",
+        specialization: "Computer Science and Engineering"
+      });
+
+      const demoTeacherUser2 = await UserModel.create({
+        name: "Demo Teacher - IT",
+        email: "demo.teacher2@example.com",
+        password: demoPassword,
+        role: "teacher",
+        specialization: "Information Technology"
+      });
+
+      const demoTeacherUser3 = await UserModel.create({
+        name: "Demo Teacher - EE",
+        email: "demo.teacher3@example.com",
+        password: demoPassword,
+        role: "teacher",
+        specialization: "Electrical Engineering"
       });
 
       // Create demo student user
@@ -132,7 +155,8 @@ export class MongoStorage implements IStorage {
       await StudentProfileModel.create({
         userId: demoStudentUser._id,
         rollNumber: "DEMO001",
-        department: "Computer Science",
+        department: "Engineering",
+        branch: "Computer Science and Engineering",
         year: "third",
         course: "B.Tech"
       });
@@ -319,6 +343,134 @@ export class MongoStorage implements IStorage {
       return profile ? { ...profile.toObject(), id: profile._id.toString() } : undefined;
     } catch (error) {
       console.error("Error removing teacher from student:", error);
+      return undefined;
+    }
+  }
+
+  // Search functionality for users
+  async searchUsers(query: string): Promise<User[]> {
+    try {
+      const users = await UserModel.find({
+        $or: [
+          { name: { $regex: query, $options: 'i' } },
+          { email: { $regex: query, $options: 'i' } },
+          { role: { $regex: query, $options: 'i' } },
+          { specialization: { $regex: query, $options: 'i' } }
+        ]
+      });
+      return users.map(user => ({ ...user.toObject(), id: user._id.toString() }));
+    } catch (error) {
+      console.error("Error searching users:", error);
+      return [];
+    }
+  }
+
+  async getTeachersBySpecialization(specialization: string): Promise<User[]> {
+    try {
+      const teachers = await UserModel.find({ 
+        role: 'teacher', 
+        specialization: { $regex: specialization, $options: 'i' } 
+      });
+      return teachers.map(teacher => ({ ...teacher.toObject(), id: teacher._id.toString() }));
+    } catch (error) {
+      console.error("Error getting teachers by specialization:", error);
+      return [];
+    }
+  }
+
+  // Search functionality for student profiles
+  async searchStudentProfiles(query: string): Promise<StudentProfile[]> {
+    try {
+      const profiles = await StudentProfileModel.find({
+        $or: [
+          { rollNumber: { $regex: query, $options: 'i' } },
+          { department: { $regex: query, $options: 'i' } },
+          { branch: { $regex: query, $options: 'i' } },
+          { year: { $regex: query, $options: 'i' } },
+          { course: { $regex: query, $options: 'i' } }
+        ]
+      }).populate('userId', 'name email').populate('assignedTeacher', 'name email');
+      
+      return profiles.map(profile => ({
+        ...profile.toObject(),
+        id: profile._id.toString(),
+        assignedTeacher: profile.assignedTeacher ? profile.assignedTeacher._id.toString() : undefined
+      }));
+    } catch (error) {
+      console.error("Error searching student profiles:", error);
+      return [];
+    }
+  }
+
+  // Auto-assign teacher based on student's branch
+  async autoAssignTeacherByBranch(studentProfileId: string): Promise<StudentProfile | undefined> {
+    try {
+      // Get the student profile
+      const studentProfile = await StudentProfileModel.findById(studentProfileId);
+      if (!studentProfile) {
+        throw new Error("Student profile not found");
+      }
+
+      // Find teachers with matching specialization
+      const matchingTeachers = await UserModel.find({ 
+        role: 'teacher',
+        specialization: { $regex: studentProfile.branch, $options: 'i' }
+      });
+
+      if (matchingTeachers.length === 0) {
+        // If no exact match, find any available teacher
+        const availableTeachers = await UserModel.find({ role: 'teacher' });
+        if (availableTeachers.length === 0) {
+          throw new Error("No teachers available for assignment");
+        }
+        
+        // Get teacher with least number of assigned students
+        const teacherWorkloads = await Promise.all(
+          availableTeachers.map(async (teacher) => {
+            const studentCount = await StudentProfileModel.countDocuments({ 
+              assignedTeacher: teacher._id 
+            });
+            return { teacher, studentCount };
+          })
+        );
+        
+        teacherWorkloads.sort((a, b) => a.studentCount - b.studentCount);
+        const selectedTeacher = teacherWorkloads[0].teacher;
+        
+        // Assign the teacher with least workload
+        const updatedProfile = await StudentProfileModel.findByIdAndUpdate(
+          studentProfileId,
+          { assignedTeacher: selectedTeacher._id },
+          { new: true }
+        );
+        
+        return updatedProfile ? { ...updatedProfile.toObject(), id: updatedProfile._id.toString() } : undefined;
+      }
+
+      // If we have matching teachers, find the one with least workload
+      const teacherWorkloads = await Promise.all(
+        matchingTeachers.map(async (teacher) => {
+          const studentCount = await StudentProfileModel.countDocuments({ 
+            assignedTeacher: teacher._id 
+          });
+          return { teacher, studentCount };
+        })
+      );
+      
+      // Sort by workload (ascending) and pick the teacher with least students
+      teacherWorkloads.sort((a, b) => a.studentCount - b.studentCount);
+      const selectedTeacher = teacherWorkloads[0].teacher;
+      
+      // Assign the selected teacher
+      const updatedProfile = await StudentProfileModel.findByIdAndUpdate(
+        studentProfileId,
+        { assignedTeacher: selectedTeacher._id },
+        { new: true }
+      );
+      
+      return updatedProfile ? { ...updatedProfile.toObject(), id: updatedProfile._id.toString() } : undefined;
+    } catch (error) {
+      console.error("Error auto-assigning teacher by branch:", error);
       return undefined;
     }
   }
@@ -633,47 +785,37 @@ export class MongoStorage implements IStorage {
         return;
       }
 
-      // Create default departments
+      // Create default departments - Only B.Tech and M.Tech Engineering Branches
       const defaultDepartments = [
         {
           name: "Computer Science and Engineering",
           code: "CSE",
-          description: "Computer Science and Engineering Department focusing on software development, algorithms, and computer systems."
-        },
-        {
-          name: "Electronics and Communication Engineering",
-          code: "ECE",
-          description: "Electronics and Communication Engineering Department specializing in electronic systems and communication technologies."
-        },
-        {
-          name: "Mechanical Engineering",
-          code: "MECH",
-          description: "Mechanical Engineering Department covering design, manufacturing, and mechanical systems."
-        },
-        {
-          name: "Civil Engineering",
-          code: "CIVIL",
-          description: "Civil Engineering Department focusing on infrastructure, construction, and urban planning."
+          description: "B.Tech and M.Tech programs in Computer Science and Engineering focusing on software development, algorithms, and computer systems."
         },
         {
           name: "Electrical Engineering",
-          code: "EEE",
-          description: "Electrical Engineering Department specializing in electrical systems, power, and control engineering."
+          code: "EE",
+          description: "B.Tech and M.Tech programs in Electrical Engineering specializing in electrical systems, power, and control engineering."
         },
         {
           name: "Information Technology",
           code: "IT",
-          description: "Information Technology Department focusing on software systems, networking, and IT infrastructure."
+          description: "B.Tech and M.Tech programs in Information Technology focusing on software systems, networking, and IT infrastructure."
         },
         {
-          name: "Biotechnology",
-          code: "BIOTECH",
-          description: "Biotechnology Department combining biology and technology for innovative solutions."
+          name: "Electronics and Communication Engineering",
+          code: "ECE",
+          description: "B.Tech and M.Tech programs in Electronics and Communication Engineering specializing in electronic systems and communication technologies."
         },
         {
-          name: "Chemical Engineering",
-          code: "CHEM",
-          description: "Chemical Engineering Department focusing on chemical processes and materials engineering."
+          name: "Civil Engineering",
+          code: "CE",
+          description: "B.Tech and M.Tech programs in Civil Engineering focusing on infrastructure, construction, and urban planning."
+        },
+        {
+          name: "Mechanical Engineering",
+          code: "ME",
+          description: "B.Tech and M.Tech programs in Mechanical Engineering covering design, manufacturing, and mechanical systems."
         }
       ];
 
