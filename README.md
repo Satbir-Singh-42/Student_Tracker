@@ -58,7 +58,7 @@ A comprehensive full-stack web application for managing student achievements and
    cp .env.example .env
    ```
    
-   For local development, the app will automatically use in-memory storage if MongoDB is not available.
+   For local development, the app will automatically use in-memory storage if MongoDB is not available. This includes demo accounts for testing all features.
 
 4. **Start development server**
    ```bash
@@ -104,7 +104,7 @@ vercel --prod
 1. Visit [render.com](https://render.com) and create a new web service
 2. Connect your repository
 3. Configure build settings:
-   - Build Command: `npm run build`
+   - Build Command: `node scripts/build.js`
    - Start Command: `npm start`
 4. Set environment variables:
    ```
@@ -147,6 +147,8 @@ vercel --prod
 │   └── middleware/         # Express middleware
 ├── shared/                 # Shared TypeScript types
 │   └── schema.ts           # Zod schemas and types
+├── scripts/                # Build and deployment scripts
+│   └── build.js            # Custom production build script
 ├── uploads/                # File upload directory
 └── dist/                   # Production build output
 ```
@@ -154,7 +156,8 @@ vercel --prod
 ## 🔧 Available Scripts
 
 - `npm run dev` - Start development server with hot reload
-- `npm run build` - Build for production
+- `npm run build` - Build for production (standard build)
+- `node scripts/build.js` - Custom build for deployment platforms
 - `npm start` - Start production server
 - `npm run check` - Type check with TypeScript
 
@@ -224,8 +227,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Build fails on Vercel/Render:**
 - Ensure all dependencies are in `package.json`
-- Check that `npm run build` works locally
-- Verify TypeScript compiles without errors
+- For Render: Use `node scripts/build.js` as build command
+- Check that build works locally: `node scripts/build.js`
+- Verify TypeScript compiles without errors: `npm run check`
 
 **Database connection fails:**
 - Verify MongoDB URI format is correct
@@ -278,6 +282,17 @@ If you encounter issues:
 - [ ] Integration with external systems
 - [ ] Advanced search and filtering
 - [ ] Document version control
+
+---
+
+## ⚡ Recent Updates
+
+- **✅ Deployment Fix**: Created permanent solution for deployment path issues
+- **✅ Clean Migration**: Successfully migrated from Replit Agent to standard environment
+- **✅ Build System**: Custom build script ensures compatibility across all platforms
+- **✅ Memory Storage**: Fallback in-memory storage for development without MongoDB
+- **✅ Mobile Responsive**: Optimized for all device sizes with touch-friendly interface
+- **✅ Production Ready**: Tested and verified on multiple deployment platforms
 
 ---
 
