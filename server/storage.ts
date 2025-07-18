@@ -279,7 +279,11 @@ export class MongoStorage implements IStorage {
   async getAchievement(id: string): Promise<Achievement | undefined> {
     try {
       const achievement = await AchievementModel.findById(id);
-      return achievement ? { ...achievement.toObject(), id: achievement._id.toString() } : undefined;
+      return achievement ? { 
+        ...achievement.toObject(), 
+        id: achievement._id.toString(),
+        studentId: achievement.studentId.toString()
+      } : undefined;
     } catch (error) {
       console.error("Error getting achievement:", error);
       return undefined;
@@ -289,7 +293,11 @@ export class MongoStorage implements IStorage {
   async getAchievementsByStudent(studentId: string): Promise<Achievement[]> {
     try {
       const achievements = await AchievementModel.find({ studentId });
-      return achievements.map(achievement => ({ ...achievement.toObject(), id: achievement._id.toString() }));
+      return achievements.map(achievement => ({ 
+        ...achievement.toObject(), 
+        id: achievement._id.toString(),
+        studentId: achievement.studentId.toString()
+      }));
     } catch (error) {
       console.error("Error getting achievements by student:", error);
       return [];
@@ -301,7 +309,11 @@ export class MongoStorage implements IStorage {
       const profiles = await StudentProfileModel.find({ department });
       const studentIds = profiles.map(profile => profile.userId);
       const achievements = await AchievementModel.find({ studentId: { $in: studentIds } });
-      return achievements.map(achievement => ({ ...achievement.toObject(), id: achievement._id.toString() }));
+      return achievements.map(achievement => ({ 
+        ...achievement.toObject(), 
+        id: achievement._id.toString(),
+        studentId: achievement.studentId.toString()
+      }));
     } catch (error) {
       console.error("Error getting achievements by department:", error);
       return [];
@@ -311,7 +323,11 @@ export class MongoStorage implements IStorage {
   async getAchievementsByStatus(status: string): Promise<Achievement[]> {
     try {
       const achievements = await AchievementModel.find({ status });
-      return achievements.map(achievement => ({ ...achievement.toObject(), id: achievement._id.toString() }));
+      return achievements.map(achievement => ({ 
+        ...achievement.toObject(), 
+        id: achievement._id.toString(),
+        studentId: achievement.studentId.toString()
+      }));
     } catch (error) {
       console.error("Error getting achievements by status:", error);
       return [];
@@ -321,7 +337,11 @@ export class MongoStorage implements IStorage {
   async createAchievement(achievementData: InsertAchievement): Promise<Achievement> {
     try {
       const achievement = await AchievementModel.create(achievementData);
-      return { ...achievement.toObject(), id: achievement._id.toString() };
+      return { 
+        ...achievement.toObject(), 
+        id: achievement._id.toString(),
+        studentId: achievement.studentId.toString()
+      };
     } catch (error) {
       console.error("Error creating achievement:", error);
       throw error;
@@ -331,7 +351,11 @@ export class MongoStorage implements IStorage {
   async updateAchievement(id: string, achievementData: Partial<Achievement>): Promise<Achievement | undefined> {
     try {
       const achievement = await AchievementModel.findByIdAndUpdate(id, achievementData, { new: true });
-      return achievement ? { ...achievement.toObject(), id: achievement._id.toString() } : undefined;
+      return achievement ? { 
+        ...achievement.toObject(), 
+        id: achievement._id.toString(),
+        studentId: achievement.studentId.toString()
+      } : undefined;
     } catch (error) {
       console.error("Error updating achievement:", error);
       return undefined;
@@ -351,7 +375,11 @@ export class MongoStorage implements IStorage {
   async getAllAchievements(): Promise<Achievement[]> {
     try {
       const achievements = await AchievementModel.find();
-      return achievements.map(achievement => ({ ...achievement.toObject(), id: achievement._id.toString() }));
+      return achievements.map(achievement => ({ 
+        ...achievement.toObject(), 
+        id: achievement._id.toString(),
+        studentId: achievement.studentId.toString()
+      }));
     } catch (error) {
       console.error("Error getting all achievements:", error);
       return [];

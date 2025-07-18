@@ -441,7 +441,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/achievements/:id", authenticateToken, async (req, res) => {
     try {
-      const achievementId = parseInt(req.params.id);
+      const achievementId = req.params.id;
       const achievement = await storage.getAchievement(achievementId);
       
       if (!achievement) {
@@ -509,7 +509,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/achievements/:id", authenticateToken, async (req, res) => {
     try {
-      const achievementId = parseInt(req.params.id);
+      const achievementId = req.params.id;
       const achievement = await storage.getAchievement(achievementId);
       
       if (!achievement) {
@@ -550,7 +550,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/achievements/:id", authenticateToken, checkRole(["student", "admin"]), async (req, res) => {
     try {
-      const achievementId = parseInt(req.params.id);
+      const achievementId = req.params.id;
       const achievement = await storage.getAchievement(achievementId);
       
       if (!achievement) {
