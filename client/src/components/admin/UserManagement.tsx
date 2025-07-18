@@ -33,6 +33,8 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { registerSchema, studentRegisterSchema } from '@/lib/types';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { AlertTriangle } from 'lucide-react';
 
 // User form schema - simplified for admin to create users
 const userFormSchema = z.object({
@@ -113,12 +115,21 @@ export default function UserManagement() {
         variant: 'success',
       });
     },
-    onError: (error: Error) => {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to create user',
-        variant: 'destructive',
-      });
+    onError: (error: any) => {
+      // Check if it's a demo restriction error
+      if (error.response?.data?.type === 'demo_restriction') {
+        toast({
+          title: 'Demo Account Restriction',
+          description: error.response.data.message,
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to create user',
+          variant: 'destructive',
+        });
+      }
     },
   });
 
@@ -182,6 +193,9 @@ export default function UserManagement() {
       deleteUserMutation.mutate(selectedUser.id);
     }
   };
+
+  // Helper function to check if current user is a demo account
+  const isDemoUser = currentUser?.email.includes('demo.') && currentUser?.email.includes('@example.com');
 
   // Helper function to check if user is a protected account
   const isProtectedAccount = (user: User): boolean => {
@@ -262,6 +276,23 @@ export default function UserManagement() {
 
   return (
     <div className="px-6">
+      {isDemoUser && (
+        <Card className="mb-6 border-amber-200 bg-amber-50">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-amber-800">
+              <AlertTriangle className="h-5 w-5" />
+              Demo Account Restrictions
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CardDescription className="text-amber-700">
+              You are using a demo account which has restricted permissions. Demo accounts cannot create new users to maintain system integrity. 
+              This ensures the demonstration environment remains separate from production data.
+            </CardDescription>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="font-poppins text-2xl font-semibold">User Management</h1>
@@ -270,7 +301,9 @@ export default function UserManagement() {
         <div className="mt-4 md:mt-0">
           <Button 
             onClick={() => setIsCreateDialogOpen(true)}
-            className="px-4 py-2 bg-primary text-white rounded-md hover:bg-blue-700 flex items-center"
+            disabled={isDemoUser}
+            className="px-4 py-2 bg-primary text-white rounded-md hover:bg-blue-700 flex items-center disabled:bg-gray-400 disabled:cursor-not-allowed"
+            title={isDemoUser ? "Demo accounts cannot create new users" : "Add new user"}
           >
             <span className="material-icons mr-2">person_add</span>
             Add New User

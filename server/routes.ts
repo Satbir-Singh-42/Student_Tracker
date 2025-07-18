@@ -254,6 +254,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/users", authenticateToken, checkRole(["admin"]), async (req, res) => {
     try {
+      // Check if the requesting admin is a demo account
+      const isDemoAdmin = req.user.email.includes('demo.') && req.user.email.includes('@example.com');
+      
+      if (isDemoAdmin) {
+        return res.status(403).json({ 
+          message: "Demo accounts cannot create new users. This is a demonstration environment with restricted permissions.",
+          type: "demo_restriction"
+        });
+      }
+
       const validatedData = registerSchema.parse(req.body);
       
       // Check for duplicate email
