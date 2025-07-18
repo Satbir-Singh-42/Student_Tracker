@@ -27,22 +27,47 @@ export default function Statistics() {
   const prepareTypeData = () => {
     if (!stats) return [];
     
-    return [
-      { name: 'Academic', value: stats.typeStats.academic },
-      { name: 'Sports', value: stats.typeStats.sports },
-      { name: 'Co-curricular', value: stats.typeStats['co-curricular'] },
-      { name: 'Extra-curricular', value: stats.typeStats['extra-curricular'] }
+    const data = [
+      { name: 'Academic', value: stats.typeStats.academic || 0 },
+      { name: 'Sports', value: stats.typeStats.sports || 0 },
+      { name: 'Co-curricular', value: stats.typeStats['co-curricular'] || 0 },
+      { name: 'Extra-curricular', value: stats.typeStats['extra-curricular'] || 0 }
     ];
+    
+    // If all values are 0, return sample data to show chart structure
+    const hasData = data.some(item => item.value > 0);
+    if (!hasData) {
+      return [
+        { name: 'Academic', value: 0 },
+        { name: 'Sports', value: 0 },
+        { name: 'Co-curricular', value: 0 },
+        { name: 'Extra-curricular', value: 0 }
+      ];
+    }
+    
+    return data;
   };
 
   const prepareStatusData = () => {
     if (!stats) return [];
     
-    return [
-      { name: 'Verified', value: stats.verifiedCount },
-      { name: 'Pending', value: stats.pendingCount },
-      { name: 'Rejected', value: stats.rejectedCount }
+    const data = [
+      { name: 'Verified', value: stats.verifiedCount || 0 },
+      { name: 'Pending', value: stats.pendingCount || 0 },
+      { name: 'Rejected', value: stats.rejectedCount || 0 }
     ];
+    
+    // If all values are 0, return sample data to show chart structure
+    const hasData = data.some(item => item.value > 0);
+    if (!hasData) {
+      return [
+        { name: 'Verified', value: 0 },
+        { name: 'Pending', value: 0 },
+        { name: 'Rejected', value: 0 }
+      ];
+    }
+    
+    return data;
   };
 
   // Real data will be calculated from actual database records
@@ -174,25 +199,34 @@ export default function Statistics() {
               </CardHeader>
               <CardContent>
                 <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={prepareTypeData()}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={true}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {prepareTypeData().map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  {prepareTypeData().every(item => item.value === 0) ? (
+                    <div className="flex items-center justify-center h-full text-gray-500">
+                      <div className="text-center">
+                        <p className="text-lg font-medium">No Activity Data</p>
+                        <p className="text-sm mt-1">Charts will appear when activities are submitted</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={prepareTypeData()}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={true}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        >
+                          {prepareTypeData().map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -204,25 +238,34 @@ export default function Statistics() {
               </CardHeader>
               <CardContent>
                 <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={prepareStatusData()}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={true}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      >
-                        <Cell fill="#4caf50" />
-                        <Cell fill="#ff9800" />
-                        <Cell fill="#f44336" />
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  {prepareStatusData().every(item => item.value === 0) ? (
+                    <div className="flex items-center justify-center h-full text-gray-500">
+                      <div className="text-center">
+                        <p className="text-lg font-medium">No Status Data</p>
+                        <p className="text-sm mt-1">Charts will appear when activities are submitted</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={prepareStatusData()}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={true}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        >
+                          <Cell fill="#4caf50" />
+                          <Cell fill="#ff9800" />
+                          <Cell fill="#f44336" />
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  )}
                 </div>
               </CardContent>
             </Card>
