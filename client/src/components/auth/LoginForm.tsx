@@ -123,15 +123,15 @@ export default function LoginForm() {
               type="button"
               variant="outline"
               className="text-xs"
-              onClick={() => setDemoAccount('priya.sharma@satvirnagra.com', 'Teacher@2025!')}
+              onClick={() => setDemoAccount('demo.student@example.com', 'demo123')}
             >
-              Student View
+              Student
             </Button>
             <Button
               type="button"
               variant="outline"
               className="text-xs"
-              onClick={() => setDemoAccount('rajesh.kumar@satvirnagra.com', 'Teacher@2025!')}
+              onClick={() => setDemoAccount('demo.teacher@example.com', 'demo123')}
             >
               Teacher
             </Button>
@@ -139,7 +139,7 @@ export default function LoginForm() {
               type="button"
               variant="outline"
               className="text-xs"
-              onClick={() => setDemoAccount('admin@satvirnagra.com', 'Admin@2025!')}
+              onClick={() => setDemoAccount('demo.admin@example.com', 'demo123')}
             >
               Admin
             </Button>
