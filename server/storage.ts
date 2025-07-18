@@ -228,18 +228,6 @@ export class MongoStorage implements IStorage {
     }
   }
 
-  async getUsersByDepartment(department: string): Promise<User[]> {
-    try {
-      const profiles = await StudentProfileModel.find({ department });
-      const userIds = profiles.map(profile => profile.userId);
-      const users = await UserModel.find({ _id: { $in: userIds } });
-      return users.map(user => ({ ...user.toObject(), id: user._id.toString() }));
-    } catch (error) {
-      console.error("Error getting users by department:", error);
-      return [];
-    }
-  }
-
   // Student profile operations
   async getStudentProfile(userId: string): Promise<StudentProfile | undefined> {
     try {
