@@ -1,6 +1,6 @@
 import express, { type Express, type Request, type Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { createStorage } from "./storage";
 import { getMongoDBStatus } from "./database";
 import { z } from "zod";
 import { globalErrorHandler, notFoundHandler, asyncHandler } from "./middleware/errorHandler";
@@ -84,6 +84,9 @@ const checkRole = (roles: string[]) => {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
+  
+  // Initialize storage
+  const storage = createStorage();
 
   // Apply security middleware
   app.use(securityHeaders);

@@ -1,7 +1,5 @@
 import { type User, type InsertUser, type StudentProfile, type InsertStudentProfile, type Achievement, type InsertAchievement } from "@shared/schema";
 import { UserModel, StudentProfileModel, AchievementModel } from "./models";
-import { getMongoDBStatus, checkMongoDBConnection } from './database';
-import { FallbackMemoryStorage } from './fallback-storage';
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 
@@ -33,151 +31,17 @@ export interface IStorage {
   getAllAchievements(): Promise<Achievement[]>;
 }
 
-// Hybrid storage implementation that switches between MongoDB and memory
-export class HybridStorage implements IStorage {
-  private mongoStorage: MongoStorage;
-  private fallbackStorage: FallbackMemoryStorage;
-  
-  constructor() {
-    this.mongoStorage = new MongoStorage();
-    this.fallbackStorage = new FallbackMemoryStorage();
-  }
-  
-  private async getActiveStorage(): Promise<IStorage> {
-    const isMongoConnected = await checkMongoDBConnection();
-    const activeStorage = isMongoConnected ? this.mongoStorage : this.fallbackStorage;
-    
-    // Debug logging
-    if (isMongoConnected) {
-      console.log('Using MongoDB storage');
-    } else {
-      console.log('Using fallback memory storage');
-    }
-    
-    return activeStorage;
-  }
-  
-  // User operations
-  async getUser(id: string): Promise<User | undefined> {
-    const storage = await this.getActiveStorage();
-    return storage.getUser(id);
-  }
-  
-  async getUserByEmail(email: string): Promise<User | undefined> {
-    const storage = await this.getActiveStorage();
-    return storage.getUserByEmail(email);
-  }
-  
-  async createUser(user: InsertUser): Promise<User> {
-    const storage = await this.getActiveStorage();
-    return storage.createUser(user);
-  }
-  
-  async updateUser(id: string, user: Partial<User>): Promise<User | undefined> {
-    const storage = await this.getActiveStorage();
-    return storage.updateUser(id, user);
-  }
-  
-  async deleteUser(id: string): Promise<boolean> {
-    const storage = await this.getActiveStorage();
-    return storage.deleteUser(id);
-  }
-  
-  async getUsers(): Promise<User[]> {
-    const storage = await this.getActiveStorage();
-    return storage.getUsers();
-  }
-  
-  async getUsersByRole(role: string): Promise<User[]> {
-    const storage = await this.getActiveStorage();
-    return storage.getUsersByRole(role);
-  }
-  
-  async getUsersByDepartment(department: string): Promise<User[]> {
-    const storage = await this.getActiveStorage();
-    return storage.getUsersByDepartment(department);
-  }
-  
-  // Student profile operations
-  async getStudentProfile(userId: string): Promise<StudentProfile | undefined> {
-    const storage = await this.getActiveStorage();
-    return storage.getStudentProfile(userId);
-  }
-  
-  async createStudentProfile(profile: InsertStudentProfile): Promise<StudentProfile> {
-    const storage = await this.getActiveStorage();
-    return storage.createStudentProfile(profile);
-  }
-  
-  async updateStudentProfile(userId: string, profile: Partial<StudentProfile>): Promise<StudentProfile | undefined> {
-    const storage = await this.getActiveStorage();
-    return storage.updateStudentProfile(userId, profile);
-  }
-  
-  // Achievement operations
-  async getAchievement(id: string): Promise<Achievement | undefined> {
-    const storage = await this.getActiveStorage();
-    return storage.getAchievement(id);
-  }
-  
-  async getAchievementsByStudent(studentId: string): Promise<Achievement[]> {
-    const storage = await this.getActiveStorage();
-    return storage.getAchievementsByStudent(studentId);
-  }
-  
-  async getAchievementsByDepartment(department: string): Promise<Achievement[]> {
-    const storage = await this.getActiveStorage();
-    return storage.getAchievementsByDepartment(department);
-  }
-  
-  async getAchievementsByStatus(status: string): Promise<Achievement[]> {
-    const storage = await this.getActiveStorage();
-    return storage.getAchievementsByStatus(status);
-  }
-  
-  async createAchievement(achievement: InsertAchievement): Promise<Achievement> {
-    const storage = await this.getActiveStorage();
-    return storage.createAchievement(achievement);
-  }
-  
-  async updateAchievement(id: string, achievement: Partial<Achievement>): Promise<Achievement | undefined> {
-    const storage = await this.getActiveStorage();
-    return storage.updateAchievement(id, achievement);
-  }
-  
-  async deleteAchievement(id: string): Promise<boolean> {
-    const storage = await this.getActiveStorage();
-    return storage.deleteAchievement(id);
-  }
-  
-  async getAllAchievements(): Promise<Achievement[]> {
-    const storage = await this.getActiveStorage();
-    return storage.getAllAchievements();
-  }
-}
-
 // MongoDB storage implementation
 export class MongoStorage implements IStorage {
-  constructor() {
-    // Create demo accounts when MongoDB is connected
-    this.createDemoAccountsIfConnected();
-  }
-
-  private async createDemoAccountsIfConnected() {
-    // Wait a bit for connection to be established, then create demo accounts
-    setTimeout(async () => {
-      if (getMongoDBStatus()) {
-        await this.createDemoAccounts();
-      }
-    }, 1000);
-  }
   
-  // Create demo accounts for different roles
   private async createDemoAccounts() {
     try {
       // Check if demo accounts already exist
       const existingAdmin = await UserModel.findOne({ email: "admin@example.com" });
-      if (existingAdmin) return;
+      if (existingAdmin) {
+        console.log("Demo accounts already exist");
+        return;
+      }
 
       // Hash password for demo accounts
       const hashedPassword = await bcrypt.hash("password123", 10);
@@ -207,47 +71,13 @@ export class MongoStorage implements IStorage {
       });
 
       // Create student profile
-      const studentProfile = await StudentProfileModel.create({
+      await StudentProfileModel.create({
         userId: studentUser._id,
-        rollNumber: "S12345",
+        rollNumber: "STU001",
         department: "Computer Science",
-        year: "3rd Year",
+        year: "third",
         course: "B.Tech"
       });
-
-      // Create sample achievements
-      await AchievementModel.create([
-        {
-          studentId: studentUser._id,
-          title: "Best Project Award",
-          description: "Received the best project award for innovative web application",
-          type: "academic",
-          dateOfActivity: new Date(2023, 9, 15),
-          proofUrl: "/uploads/sample-certificate.pdf",
-          status: "Verified",
-          feedback: "Excellent work on the project!"
-        },
-        {
-          studentId: studentUser._id,
-          title: "College Cricket Team",
-          description: "Selected for college cricket team and participated in inter-college tournament",
-          type: "sports",
-          dateOfActivity: new Date(2023, 5, 10),
-          proofUrl: "/uploads/cricket-team-selection.pdf",
-          status: "Verified",
-          feedback: "Great contribution to the team"
-        },
-        {
-          studentId: studentUser._id,
-          title: "Web Development Workshop",
-          description: "Organized a web development workshop for junior students",
-          type: "co-curricular",
-          dateOfActivity: new Date(2023, 11, 5),
-          proofUrl: "/uploads/workshop-photos.pdf",
-          status: "Pending",
-          feedback: null
-        }
-      ]);
 
       console.log("Demo accounts created successfully");
     } catch (error) {
@@ -289,7 +119,7 @@ export class MongoStorage implements IStorage {
   async updateUser(id: string, userData: Partial<User>): Promise<User | undefined> {
     try {
       const user = await UserModel.findByIdAndUpdate(id, userData, { new: true });
-      return user ? { ...user.toObject(), _id: user._id.toString() } : undefined;
+      return user ? { ...user.toObject(), id: user._id.toString() } : undefined;
     } catch (error) {
       console.error("Error updating user:", error);
       return undefined;
@@ -299,7 +129,7 @@ export class MongoStorage implements IStorage {
   async deleteUser(id: string): Promise<boolean> {
     try {
       const result = await UserModel.findByIdAndDelete(id);
-      return !!result;
+      return result !== null;
     } catch (error) {
       console.error("Error deleting user:", error);
       return false;
@@ -331,7 +161,7 @@ export class MongoStorage implements IStorage {
       const profiles = await StudentProfileModel.find({ department });
       const userIds = profiles.map(profile => profile.userId);
       const users = await UserModel.find({ _id: { $in: userIds } });
-      return users.map(user => ({ ...user.toObject(), _id: user._id.toString() }));
+      return users.map(user => ({ ...user.toObject(), id: user._id.toString() }));
     } catch (error) {
       console.error("Error getting users by department:", error);
       return [];
@@ -342,7 +172,7 @@ export class MongoStorage implements IStorage {
   async getStudentProfile(userId: string): Promise<StudentProfile | undefined> {
     try {
       const profile = await StudentProfileModel.findOne({ userId });
-      return profile ? { ...profile.toObject(), _id: profile._id.toString(), userId: profile.userId.toString() } : undefined;
+      return profile ? { ...profile.toObject(), id: profile._id.toString() } : undefined;
     } catch (error) {
       console.error("Error getting student profile:", error);
       return undefined;
@@ -352,7 +182,7 @@ export class MongoStorage implements IStorage {
   async createStudentProfile(profileData: InsertStudentProfile): Promise<StudentProfile> {
     try {
       const profile = await StudentProfileModel.create(profileData);
-      return { ...profile.toObject(), id: profile._id.toString(), userId: profile.userId.toString() };
+      return { ...profile.toObject(), id: profile._id.toString() };
     } catch (error) {
       console.error("Error creating student profile:", error);
       throw error;
@@ -361,8 +191,12 @@ export class MongoStorage implements IStorage {
 
   async updateStudentProfile(userId: string, profileData: Partial<StudentProfile>): Promise<StudentProfile | undefined> {
     try {
-      const profile = await StudentProfileModel.findOneAndUpdate({ userId }, profileData, { new: true });
-      return profile ? { ...profile.toObject(), _id: profile._id.toString(), userId: profile.userId.toString() } : undefined;
+      const profile = await StudentProfileModel.findOneAndUpdate(
+        { userId },
+        profileData,
+        { new: true }
+      );
+      return profile ? { ...profile.toObject(), id: profile._id.toString() } : undefined;
     } catch (error) {
       console.error("Error updating student profile:", error);
       return undefined;
@@ -373,7 +207,7 @@ export class MongoStorage implements IStorage {
   async getAchievement(id: string): Promise<Achievement | undefined> {
     try {
       const achievement = await AchievementModel.findById(id);
-      return achievement ? { ...achievement.toObject(), _id: achievement._id.toString(), studentId: achievement.studentId.toString() } : undefined;
+      return achievement ? { ...achievement.toObject(), id: achievement._id.toString() } : undefined;
     } catch (error) {
       console.error("Error getting achievement:", error);
       return undefined;
@@ -383,7 +217,7 @@ export class MongoStorage implements IStorage {
   async getAchievementsByStudent(studentId: string): Promise<Achievement[]> {
     try {
       const achievements = await AchievementModel.find({ studentId });
-      return achievements.map(achievement => ({ ...achievement.toObject(), _id: achievement._id.toString(), studentId: achievement.studentId.toString() }));
+      return achievements.map(achievement => ({ ...achievement.toObject(), id: achievement._id.toString() }));
     } catch (error) {
       console.error("Error getting achievements by student:", error);
       return [];
@@ -393,9 +227,9 @@ export class MongoStorage implements IStorage {
   async getAchievementsByDepartment(department: string): Promise<Achievement[]> {
     try {
       const profiles = await StudentProfileModel.find({ department });
-      const userIds = profiles.map(profile => profile.userId);
-      const achievements = await AchievementModel.find({ studentId: { $in: userIds } });
-      return achievements.map(achievement => ({ ...achievement.toObject(), _id: achievement._id.toString(), studentId: achievement.studentId.toString() }));
+      const studentIds = profiles.map(profile => profile.userId);
+      const achievements = await AchievementModel.find({ studentId: { $in: studentIds } });
+      return achievements.map(achievement => ({ ...achievement.toObject(), id: achievement._id.toString() }));
     } catch (error) {
       console.error("Error getting achievements by department:", error);
       return [];
@@ -405,7 +239,7 @@ export class MongoStorage implements IStorage {
   async getAchievementsByStatus(status: string): Promise<Achievement[]> {
     try {
       const achievements = await AchievementModel.find({ status });
-      return achievements.map(achievement => ({ ...achievement.toObject(), _id: achievement._id.toString(), studentId: achievement.studentId.toString() }));
+      return achievements.map(achievement => ({ ...achievement.toObject(), id: achievement._id.toString() }));
     } catch (error) {
       console.error("Error getting achievements by status:", error);
       return [];
@@ -415,7 +249,7 @@ export class MongoStorage implements IStorage {
   async createAchievement(achievementData: InsertAchievement): Promise<Achievement> {
     try {
       const achievement = await AchievementModel.create(achievementData);
-      return { ...achievement.toObject(), _id: achievement._id.toString(), studentId: achievement.studentId.toString() };
+      return { ...achievement.toObject(), id: achievement._id.toString() };
     } catch (error) {
       console.error("Error creating achievement:", error);
       throw error;
@@ -425,7 +259,7 @@ export class MongoStorage implements IStorage {
   async updateAchievement(id: string, achievementData: Partial<Achievement>): Promise<Achievement | undefined> {
     try {
       const achievement = await AchievementModel.findByIdAndUpdate(id, achievementData, { new: true });
-      return achievement ? { ...achievement.toObject(), _id: achievement._id.toString(), studentId: achievement.studentId.toString() } : undefined;
+      return achievement ? { ...achievement.toObject(), id: achievement._id.toString() } : undefined;
     } catch (error) {
       console.error("Error updating achievement:", error);
       return undefined;
@@ -435,7 +269,7 @@ export class MongoStorage implements IStorage {
   async deleteAchievement(id: string): Promise<boolean> {
     try {
       const result = await AchievementModel.findByIdAndDelete(id);
-      return !!result;
+      return result !== null;
     } catch (error) {
       console.error("Error deleting achievement:", error);
       return false;
@@ -445,7 +279,7 @@ export class MongoStorage implements IStorage {
   async getAllAchievements(): Promise<Achievement[]> {
     try {
       const achievements = await AchievementModel.find();
-      return achievements.map(achievement => ({ ...achievement.toObject(), _id: achievement._id.toString(), studentId: achievement.studentId.toString() }));
+      return achievements.map(achievement => ({ ...achievement.toObject(), id: achievement._id.toString() }));
     } catch (error) {
       console.error("Error getting all achievements:", error);
       return [];
@@ -453,5 +287,12 @@ export class MongoStorage implements IStorage {
   }
 }
 
-// Create a single instance of HybridStorage
-export const storage = new HybridStorage();
+// Create storage instance
+export const createStorage = (): IStorage => {
+  const storage = new MongoStorage();
+  // Create demo accounts when storage is initialized
+  setTimeout(() => {
+    (storage as any).createDemoAccounts();
+  }, 1000);
+  return storage;
+};
