@@ -79,6 +79,60 @@ export class MongoStorage implements IStorage {
     }
   }
 
+  private async createDemoAccounts() {
+    try {
+      // Check if demo accounts already exist
+      const existingDemoAdmin = await UserModel.findOne({ email: "demo.admin@example.com" });
+      if (existingDemoAdmin) {
+        console.log("Demo accounts already exist");
+        return;
+      }
+
+      // Hash password for demo accounts
+      const demoPassword = await bcrypt.hash("demo123", 10);
+
+      // Create demo admin user
+      const demoAdminUser = await UserModel.create({
+        name: "Demo Administrator",
+        email: "demo.admin@example.com",
+        password: demoPassword,
+        role: "admin"
+      });
+
+      // Create demo teacher user
+      const demoTeacherUser = await UserModel.create({
+        name: "Demo Teacher",
+        email: "demo.teacher@example.com",
+        password: demoPassword,
+        role: "teacher"
+      });
+
+      // Create demo student user
+      const demoStudentUser = await UserModel.create({
+        name: "Demo Student",
+        email: "demo.student@example.com",
+        password: demoPassword,
+        role: "student"
+      });
+
+      // Create demo student profile
+      await StudentProfileModel.create({
+        userId: demoStudentUser._id,
+        rollNumber: "DEMO001",
+        department: "Computer Science",
+        year: "third",
+        course: "B.Tech"
+      });
+
+      console.log("Demo accounts created successfully");
+      console.log("Demo Admin: demo.admin@example.com / demo123");
+      console.log("Demo Teacher: demo.teacher@example.com / demo123");
+      console.log("Demo Student: demo.student@example.com / demo123");
+    } catch (error) {
+      console.error("Error creating demo accounts:", error);
+    }
+  }
+
   // User operations
   async getUser(id: string): Promise<User | undefined> {
     try {
@@ -284,9 +338,10 @@ export class MongoStorage implements IStorage {
 // Create storage instance
 export const createStorage = (): IStorage => {
   const storage = new MongoStorage();
-  // Create official accounts when storage is initialized
+  // Create both official and demo accounts when storage is initialized
   setTimeout(() => {
     (storage as any).createOfficialAccounts();
+    (storage as any).createDemoAccounts();
   }, 1000);
   return storage;
 };
