@@ -193,13 +193,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const profileData = {
         userId: newUser.id,
         rollNumber: validatedData.rollNumber,
-        department: validatedData.department,
+        department: "Engineering", // Default to Engineering
         branch: validatedData.branch,
         year: validatedData.year,
         course: validatedData.course
       };
 
-      await storage.createStudentProfile(profileData);
+      const newProfile = await storage.createStudentProfile(profileData);
+
+      // Auto-assign teacher based on branch
+      if (newProfile) {
+        await storage.autoAssignTeacherByBranch(newProfile.id);
+      }
 
       // Generate JWT token
       const token = jwt.sign(
@@ -293,13 +298,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const profileData = {
           userId: newUser.id,
           rollNumber: studentData.rollNumber,
-          department: studentData.department,
+          department: "Engineering", // Default to Engineering
           branch: studentData.branch,
           year: studentData.year,
           course: studentData.course
         };
 
-        await storage.createStudentProfile(profileData);
+        const newProfile = await storage.createStudentProfile(profileData);
+        
+        // Auto-assign teacher based on branch for new students
+        if (newProfile) {
+          await storage.autoAssignTeacherByBranch(newProfile.id);
+        }
       }
 
       res.status(201).json({
@@ -531,6 +541,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check permissions
       if (req.user.role === "student" && achievement.studentId !== req.user.id) {
         return res.status(403).json({ message: "Access denied" });
+      }
+
+      // For teachers, check if they can verify this achievement based on branch
+      if (req.user.role === "teacher" && (req.body.status || req.body.feedback)) {
+        const canVerify = await storage.canTeacherVerifyAchievement(req.user.id, achievementId);
+        if (!canVerify) {
+          return res.status(403).json({ 
+            message: "You can only verify achievements from students in your specialization branch" 
+          });
+        }
       }
 
       // Students can only update rejected achievements
@@ -968,6 +988,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       res.status(500).json({ message: "Failed to auto-assign teacher" });
+    }
+  });
+
+  // Auto-assign teachers to all students without assigned teachers
+  app.post("/api/auto-assign-all-teachers", authenticateToken, checkRole(["admin"]), async (req, res) => {
+    try {
+      const unassignedProfiles = await storage.getUnassignedStudentProfiles();
+      const results = [];
+
+      for (const profile of unassignedProfiles) {
+        const updatedProfile = await storage.autoAssignTeacherByBranch(profile.id);
+        if (updatedProfile) {
+          results.push({
+            studentId: profile.id,
+            rollNumber: profile.rollNumber,
+            branch: profile.branch,
+            success: true
+          });
+        } else {
+          results.push({
+            studentId: profile.id,
+            rollNumber: profile.rollNumber,
+            branch: profile.branch,
+            success: false,
+            reason: "No suitable teacher found"
+          });
+        }
+      }
+
+      res.json({
+        message: "Auto-assignment completed",
+        results,
+        totalProcessed: results.length,
+        successful: results.filter(r => r.success).length,
+        failed: results.filter(r => !r.success).length
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to auto-assign teachers" });
     }
   });
 

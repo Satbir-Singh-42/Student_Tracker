@@ -57,7 +57,6 @@ export const studentRegisterSchema = z.object({
   confirmPassword: z.string().min(6, { message: "Password must be at least 6 characters" }),
   role: z.enum(["student", "teacher", "admin"]).default("student"),
   rollNumber: z.string().min(1, { message: "Roll number is required" }),
-  department: z.string().min(1, { message: "Department is required" }),
   branch: z.string().min(1, { message: "Branch is required" }),
   year: z.string().min(1, { message: "Year is required" }),
   course: z.string().min(1, { message: "Course is required" }),

@@ -20,7 +20,6 @@ export default function RegisterForm() {
       password: '',
       confirmPassword: '',
       rollNumber: '',
-      department: '',
       branch: '',
       year: '',
       course: '',
@@ -88,27 +87,6 @@ export default function RegisterForm() {
                     {...field} 
                   />
                 </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="department"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Department</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your department" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="Engineering">Engineering</SelectItem>
-                  </SelectContent>
-                </Select>
                 <FormMessage />
               </FormItem>
             )}

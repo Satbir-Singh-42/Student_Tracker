@@ -319,6 +319,89 @@ export class MongoStorage implements IStorage {
     }
   }
 
+  async getUnassignedStudentProfiles(): Promise<StudentProfile[]> {
+    try {
+      const profiles = await StudentProfileModel.find({ 
+        $or: [
+          { assignedTeacher: { $exists: false } },
+          { assignedTeacher: null }
+        ]
+      });
+      return profiles.map(profile => ({ ...profile.toObject(), id: profile._id.toString() }));
+    } catch (error) {
+      console.error("Error getting unassigned student profiles:", error);
+      return [];
+    }
+  }
+
+  async getTeachersBySpecialization(specialization: string): Promise<User[]> {
+    try {
+      const teachers = await UserModel.find({ 
+        role: 'teacher',
+        specialization: specialization
+      });
+      return teachers.map(teacher => ({ ...teacher.toObject(), id: teacher._id.toString() }));
+    } catch (error) {
+      console.error("Error getting teachers by specialization:", error);
+      return [];
+    }
+  }
+
+  async canTeacherVerifyAchievement(teacherId: string, achievementId: string): Promise<boolean> {
+    try {
+      // Get the achievement
+      const achievement = await AchievementModel.findById(achievementId);
+      if (!achievement) return false;
+
+      // Get the student profile
+      const studentProfile = await StudentProfileModel.findOne({ userId: achievement.studentId });
+      if (!studentProfile) return false;
+
+      // Get the teacher
+      const teacher = await UserModel.findById(teacherId);
+      if (!teacher || teacher.role !== 'teacher') return false;
+
+      // Check if teacher's specialization matches student's branch (any teacher from the branch can verify)
+      return teacher.specialization === studentProfile.branch;
+    } catch (error) {
+      console.error("Error checking teacher verification permissions:", error);
+      return false;
+    }
+  }
+
+  async searchUsers(query: string): Promise<User[]> {
+    try {
+      const users = await UserModel.find({
+        $or: [
+          { name: { $regex: query, $options: 'i' } },
+          { email: { $regex: query, $options: 'i' } },
+          { specialization: { $regex: query, $options: 'i' } }
+        ]
+      });
+      return users.map(user => ({ ...user.toObject(), id: user._id.toString() }));
+    } catch (error) {
+      console.error("Error searching users:", error);
+      return [];
+    }
+  }
+
+  async searchStudentProfiles(query: string): Promise<StudentProfile[]> {
+    try {
+      const profiles = await StudentProfileModel.find({
+        $or: [
+          { rollNumber: { $regex: query, $options: 'i' } },
+          { department: { $regex: query, $options: 'i' } },
+          { branch: { $regex: query, $options: 'i' } },
+          { course: { $regex: query, $options: 'i' } }
+        ]
+      }).populate('userId', 'name email');
+      return profiles.map(profile => ({ ...profile.toObject(), id: profile._id.toString() }));
+    } catch (error) {
+      console.error("Error searching student profiles:", error);
+      return [];
+    }
+  }
+
   async assignTeacherToStudent(studentProfileId: string, teacherId: string): Promise<StudentProfile | undefined> {
     try {
       const profile = await StudentProfileModel.findByIdAndUpdate(
@@ -329,6 +412,58 @@ export class MongoStorage implements IStorage {
       return profile ? { ...profile.toObject(), id: profile._id.toString() } : undefined;
     } catch (error) {
       console.error("Error assigning teacher to student:", error);
+      return undefined;
+    }
+  }
+
+  async autoAssignTeacherByBranch(studentProfileId: string): Promise<StudentProfile | undefined> {
+    try {
+      // Get student profile
+      const studentProfile = await StudentProfileModel.findById(studentProfileId);
+      if (!studentProfile) {
+        return undefined;
+      }
+
+      // Find teachers with matching specialization
+      const teachers = await UserModel.find({
+        role: 'teacher',
+        specialization: studentProfile.branch
+      });
+
+      if (teachers.length === 0) {
+        console.log(`No teachers found for branch: ${studentProfile.branch}`);
+        return undefined;
+      }
+
+      // Get teacher workload (number of assigned students)
+      const teacherWorkloads = await Promise.all(
+        teachers.map(async (teacher) => {
+          const assignedStudents = await StudentProfileModel.countDocuments({
+            assignedTeacher: teacher._id
+          });
+          return {
+            teacher,
+            workload: assignedStudents
+          };
+        })
+      );
+
+      // Sort by workload (ascending) to balance the load
+      teacherWorkloads.sort((a, b) => a.workload - b.workload);
+      
+      // Assign the teacher with the lowest workload
+      const selectedTeacher = teacherWorkloads[0].teacher;
+      
+      const updatedProfile = await StudentProfileModel.findByIdAndUpdate(
+        studentProfileId,
+        { assignedTeacher: selectedTeacher._id },
+        { new: true }
+      );
+
+      console.log(`Auto-assigned teacher ${selectedTeacher.name} to student ${studentProfile.rollNumber} for branch ${studentProfile.branch}`);
+      return updatedProfile ? { ...updatedProfile.toObject(), id: updatedProfile._id.toString() } : undefined;
+    } catch (error) {
+      console.error("Error auto-assigning teacher:", error);
       return undefined;
     }
   }
