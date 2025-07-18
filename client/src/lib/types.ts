@@ -7,6 +7,7 @@ export interface User {
   email: string;
   role: "student" | "teacher" | "admin";
   profileImage: string | null;
+  specialization?: string;
 }
 
 export interface StudentProfile {
@@ -45,6 +46,7 @@ export const registerSchema = z.object({
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
   confirmPassword: z.string().min(6, { message: "Password must be at least 6 characters" }),
   role: z.enum(["student", "teacher", "admin"]).default("student"),
+  specialization: z.string().optional(),
 }).refine(data => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],

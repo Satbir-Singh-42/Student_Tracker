@@ -43,6 +43,8 @@ const userFormSchema = z.object({
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
   confirmPassword: z.string().min(6, { message: "Password must be at least 6 characters" }),
   role: z.enum(["student", "teacher", "admin"]),
+  // Teacher fields
+  specialization: z.string().optional(),
   // Additional fields for student role
   rollNumber: z.string().optional(),
   department: z.string().optional(),
@@ -222,6 +224,7 @@ export default function UserManagement() {
       name: user.name,
       email: user.email,
       role: user.role,
+      specialization: user.specialization,
     });
     setIsEditDialogOpen(true);
   };
@@ -348,6 +351,7 @@ export default function UserManagement() {
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Specialization</th>
                 <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -378,6 +382,11 @@ export default function UserManagement() {
                         }`}>
                         {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {user.role === 'teacher' && user.specialization ? user.specialization : '-'}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <Button 
@@ -417,7 +426,7 @@ export default function UserManagement() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={4} className="px-6 py-10 text-center text-gray-500">
+                  <td colSpan={5} className="px-6 py-10 text-center text-gray-500">
                     No users found matching your search criteria.
                   </td>
                 </tr>
@@ -534,6 +543,35 @@ export default function UserManagement() {
                   </FormItem>
                 )}
               />
+
+              {/* Teacher-specific fields */}
+              {createForm.watch('role') === 'teacher' && (
+                <FormField
+                  control={createForm.control}
+                  name="specialization"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Specialization Branch</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select specialization branch" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Computer Science and Engineering">Computer Science and Engineering</SelectItem>
+                          <SelectItem value="Electrical Engineering">Electrical Engineering</SelectItem>
+                          <SelectItem value="Information Technology">Information Technology</SelectItem>
+                          <SelectItem value="Electronics and Communication Engineering">Electronics and Communication Engineering</SelectItem>
+                          <SelectItem value="Civil Engineering">Civil Engineering</SelectItem>
+                          <SelectItem value="Mechanical Engineering">Mechanical Engineering</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
               
               {/* Student-specific fields - 2 columns */}
               {createForm.watch('role') === 'student' && (
@@ -746,6 +784,35 @@ export default function UserManagement() {
                   </FormItem>
                 )}
               />
+
+              {/* Teacher specialization field in edit form */}
+              {editForm.watch('role') === 'teacher' && (
+                <FormField
+                  control={editForm.control}
+                  name="specialization"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Specialization Branch</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select specialization branch" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Computer Science and Engineering">Computer Science and Engineering</SelectItem>
+                          <SelectItem value="Electrical Engineering">Electrical Engineering</SelectItem>
+                          <SelectItem value="Information Technology">Information Technology</SelectItem>
+                          <SelectItem value="Electronics and Communication Engineering">Electronics and Communication Engineering</SelectItem>
+                          <SelectItem value="Civil Engineering">Civil Engineering</SelectItem>
+                          <SelectItem value="Mechanical Engineering">Mechanical Engineering</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
               
               <DialogFooter className="mt-6">
                 <Button 

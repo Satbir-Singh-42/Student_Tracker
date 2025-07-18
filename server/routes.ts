@@ -287,7 +287,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: validatedData.email,
         password: hashedPassword,
         role: validatedData.role,
-        profileImage: null
+        profileImage: null,
+        specialization: validatedData.role === 'teacher' ? validatedData.specialization : undefined
       };
 
       const newUser = await storage.createUser(userData);
