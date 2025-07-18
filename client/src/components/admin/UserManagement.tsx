@@ -437,7 +437,7 @@ export default function UserManagement() {
 
       {/* Create User Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Add New User</DialogTitle>
             <DialogDescription>
@@ -446,35 +446,39 @@ export default function UserManagement() {
           </DialogHeader>
           
           <Form {...createForm}>
-            <form onSubmit={createForm.handleSubmit(handleCreateUser)} className="space-y-4">
-              <FormField
-                control={createForm.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Full Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter user's full name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={createForm.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email Address</FormLabel>
-                    <FormControl>
-                      <Input type="email" placeholder="Enter email" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
+            <form onSubmit={createForm.handleSubmit(handleCreateUser)} className="space-y-6">
+              {/* Basic Information - 2 columns */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={createForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter user's full name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={createForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email Address</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="Enter email" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Role Selection - Full width */}
               <FormField
                 control={createForm.control}
                 name="role"
@@ -498,126 +502,134 @@ export default function UserManagement() {
                 )}
               />
               
+              {/* Student-specific fields - 2 columns */}
               {createForm.watch('role') === 'student' && (
-                <>
-                  <FormField
-                    control={createForm.control}
-                    name="rollNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Roll Number</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter roll number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={createForm.control}
-                    name="department"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Department</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={createForm.control}
+                      name="rollNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Roll Number</FormLabel>
                           <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select department" />
-                            </SelectTrigger>
+                            <Input placeholder="Enter roll number" {...field} />
                           </FormControl>
-                          <SelectContent>
-                            <SelectItem value="computer-science">Computer Science</SelectItem>
-                            <SelectItem value="physics">Physics</SelectItem>
-                            <SelectItem value="chemistry">Chemistry</SelectItem>
-                            <SelectItem value="mathematics">Mathematics</SelectItem>
-                            <SelectItem value="biology">Biology</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={createForm.control}
+                      name="department"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Department</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select department" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="computer-science">Computer Science</SelectItem>
+                              <SelectItem value="physics">Physics</SelectItem>
+                              <SelectItem value="chemistry">Chemistry</SelectItem>
+                              <SelectItem value="mathematics">Mathematics</SelectItem>
+                              <SelectItem value="biology">Biology</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                   
-                  <FormField
-                    control={createForm.control}
-                    name="year"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Year</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select year" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="first">First Year</SelectItem>
-                            <SelectItem value="second">Second Year</SelectItem>
-                            <SelectItem value="third">Third Year</SelectItem>
-                            <SelectItem value="fourth">Fourth Year</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={createForm.control}
-                    name="course"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Course</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select course" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="btech">B.Tech</SelectItem>
-                            <SelectItem value="be">B.E.</SelectItem>
-                            <SelectItem value="bsc">B.Sc.</SelectItem>
-                            <SelectItem value="mtech">M.Tech</SelectItem>
-                            <SelectItem value="msc">M.Sc.</SelectItem>
-                            <SelectItem value="phd">Ph.D</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={createForm.control}
+                      name="year"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Year</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select year" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="first">First Year</SelectItem>
+                              <SelectItem value="second">Second Year</SelectItem>
+                              <SelectItem value="third">Third Year</SelectItem>
+                              <SelectItem value="fourth">Fourth Year</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={createForm.control}
+                      name="course"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Course</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select course" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="btech">B.Tech</SelectItem>
+                              <SelectItem value="be">B.E.</SelectItem>
+                              <SelectItem value="bsc">B.Sc.</SelectItem>
+                              <SelectItem value="mtech">M.Tech</SelectItem>
+                              <SelectItem value="msc">M.Sc.</SelectItem>
+                              <SelectItem value="phd">Ph.D</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
               )}
               
-              <FormField
-                control={createForm.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="Create password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={createForm.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Confirm Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="Confirm password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Password fields - 2 columns */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={createForm.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Password</FormLabel>
+                      <FormControl>
+                        <Input type="password" placeholder="Create password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={createForm.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Confirm Password</FormLabel>
+                      <FormControl>
+                        <Input type="password" placeholder="Confirm password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               
               <DialogFooter className="mt-6">
                 <Button 
