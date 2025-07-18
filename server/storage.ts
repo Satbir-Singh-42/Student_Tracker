@@ -72,27 +72,129 @@ export class MongoStorage implements IStorage {
         role: "admin"
       });
 
-      // Create teacher users with specializations
-      const teacher1 = await UserModel.create({
-        name: "Dr. Rajesh Kumar",
-        email: "rajesh.kumar@satvirnagra.com",
-        password: teacherPassword,
-        role: "teacher",
-        specialization: "Computer Science and Engineering"
-      });
+      // Create teacher users for each branch
+      const teachers = [
+        {
+          name: "Dr. Rajesh Kumar",
+          email: "rajesh.kumar@satvirnagra.com",
+          specialization: "Computer Science and Engineering"
+        },
+        {
+          name: "Prof. Priya Sharma",
+          email: "priya.sharma@satvirnagra.com",
+          specialization: "Information Technology"
+        },
+        {
+          name: "Dr. Amit Singh",
+          email: "amit.singh@satvirnagra.com",
+          specialization: "Electrical Engineering"
+        },
+        {
+          name: "Prof. Neha Gupta",
+          email: "neha.gupta@satvirnagra.com",
+          specialization: "Electronics and Communication Engineering"
+        },
+        {
+          name: "Dr. Vikram Patel",
+          email: "vikram.patel@satvirnagra.com",
+          specialization: "Civil Engineering"
+        },
+        {
+          name: "Prof. Ravi Mehta",
+          email: "ravi.mehta@satvirnagra.com",
+          specialization: "Mechanical Engineering"
+        }
+      ];
 
-      const teacher2 = await UserModel.create({
-        name: "Prof. Priya Sharma",
-        email: "priya.sharma@satvirnagra.com",
-        password: teacherPassword,
-        role: "teacher",
-        specialization: "Information Technology"
-      });
+      for (const teacherData of teachers) {
+        await UserModel.create({
+          ...teacherData,
+          password: teacherPassword,
+          role: "teacher"
+        });
+      }
+
+      // Create some students for each branch
+      const students = [
+        {
+          name: "Arjun Sharma",
+          email: "arjun.sharma@satvirnagra.com",
+          branch: "Computer Science and Engineering",
+          rollNumber: "CSE001",
+          year: "third",
+          course: "B.Tech"
+        },
+        {
+          name: "Kavya Patel",
+          email: "kavya.patel@satvirnagra.com", 
+          branch: "Information Technology",
+          rollNumber: "IT001",
+          year: "second",
+          course: "B.Tech"
+        },
+        {
+          name: "Rohit Verma",
+          email: "rohit.verma@satvirnagra.com",
+          branch: "Electrical Engineering",
+          rollNumber: "EE001",
+          year: "fourth",
+          course: "B.Tech"
+        },
+        {
+          name: "Ananya Singh",
+          email: "ananya.singh@satvirnagra.com",
+          branch: "Electronics and Communication Engineering",
+          rollNumber: "ECE001",
+          year: "first",
+          course: "B.Tech"
+        },
+        {
+          name: "Karan Joshi",
+          email: "karan.joshi@satvirnagra.com",
+          branch: "Civil Engineering",
+          rollNumber: "CE001",
+          year: "third",
+          course: "B.Tech"
+        },
+        {
+          name: "Pooja Agarwal",
+          email: "pooja.agarwal@satvirnagra.com",
+          branch: "Mechanical Engineering", 
+          rollNumber: "ME001",
+          year: "second",
+          course: "B.Tech"
+        }
+      ];
+
+      const studentPassword = await bcrypt.hash("Student@2025!", 10);
+      
+      for (const studentData of students) {
+        // Create student user
+        const studentUser = await UserModel.create({
+          name: studentData.name,
+          email: studentData.email,
+          password: studentPassword,
+          role: "student"
+        });
+
+        // Create student profile
+        const studentProfile = await StudentProfileModel.create({
+          userId: studentUser._id,
+          rollNumber: studentData.rollNumber,
+          department: "Engineering",
+          branch: studentData.branch,
+          year: studentData.year,
+          course: studentData.course
+        });
+
+        // Auto-assign teacher based on branch
+        await this.autoAssignTeacherByBranch(studentProfile._id.toString());
+      }
 
       console.log("Official accounts created successfully");
       console.log("Admin: admin@satvirnagra.com / Admin@2025!");
-      console.log("Teacher 1: rajesh.kumar@satvirnagra.com / Teacher@2025!");
-      console.log("Teacher 2: priya.sharma@satvirnagra.com / Teacher@2025!");
+      console.log("Teachers: rajesh.kumar@satvirnagra.com, priya.sharma@satvirnagra.com, amit.singh@satvirnagra.com, neha.gupta@satvirnagra.com, vikram.patel@satvirnagra.com, ravi.mehta@satvirnagra.com / Teacher@2025!");
+      console.log("Students: arjun.sharma@satvirnagra.com, kavya.patel@satvirnagra.com, rohit.verma@satvirnagra.com, ananya.singh@satvirnagra.com, karan.joshi@satvirnagra.com, pooja.agarwal@satvirnagra.com / Student@2025!");
     } catch (error) {
       console.error("Error creating official accounts:", error);
     }
@@ -104,7 +206,8 @@ export class MongoStorage implements IStorage {
       const existingDemoAdmin = await UserModel.findOne({ email: "demo.admin@example.com" });
       if (existingDemoAdmin) {
         console.log("Demo accounts already exist");
-        return;
+        // Clear existing demo data and recreate
+        await this.clearDemoData();
       }
 
       // Hash password for demo accounts
@@ -118,56 +221,132 @@ export class MongoStorage implements IStorage {
         role: "admin"
       });
 
-      // Create demo teacher users with specializations
-      const demoTeacherUser = await UserModel.create({
-        name: "Demo Teacher - CSE",
-        email: "demo.teacher@example.com",
-        password: demoPassword,
-        role: "teacher",
-        specialization: "Computer Science and Engineering"
-      });
+      // Create demo teacher users for each branch
+      const demoTeachers = [
+        {
+          name: "Demo Teacher - CSE",
+          email: "demo.teacher.cse@example.com",
+          specialization: "Computer Science and Engineering"
+        },
+        {
+          name: "Demo Teacher - IT",
+          email: "demo.teacher.it@example.com",
+          specialization: "Information Technology"
+        },
+        {
+          name: "Demo Teacher - EE",
+          email: "demo.teacher.ee@example.com",
+          specialization: "Electrical Engineering"
+        },
+        {
+          name: "Demo Teacher - ECE",
+          email: "demo.teacher.ece@example.com",
+          specialization: "Electronics and Communication Engineering"
+        },
+        {
+          name: "Demo Teacher - CE",
+          email: "demo.teacher.ce@example.com",
+          specialization: "Civil Engineering"
+        },
+        {
+          name: "Demo Teacher - ME",
+          email: "demo.teacher.me@example.com",
+          specialization: "Mechanical Engineering"
+        }
+      ];
 
-      const demoTeacherUser2 = await UserModel.create({
-        name: "Demo Teacher - IT",
-        email: "demo.teacher2@example.com",
-        password: demoPassword,
-        role: "teacher",
-        specialization: "Information Technology"
-      });
+      for (const teacherData of demoTeachers) {
+        await UserModel.create({
+          ...teacherData,
+          password: demoPassword,
+          role: "teacher"
+        });
+      }
 
-      const demoTeacherUser3 = await UserModel.create({
-        name: "Demo Teacher - EE",
-        email: "demo.teacher3@example.com",
-        password: demoPassword,
-        role: "teacher",
-        specialization: "Electrical Engineering"
-      });
+      // Create demo students for each branch
+      const demoStudents = [
+        {
+          name: "Demo Student - CSE",
+          email: "demo.student.cse@example.com",
+          branch: "Computer Science and Engineering",
+          rollNumber: "DEMO001",
+          year: "third",
+          course: "B.Tech"
+        },
+        {
+          name: "Demo Student - IT",
+          email: "demo.student.it@example.com",
+          branch: "Information Technology",
+          rollNumber: "DEMO002",
+          year: "second",
+          course: "B.Tech"
+        },
+        {
+          name: "Demo Student - EE",
+          email: "demo.student.ee@example.com",
+          branch: "Electrical Engineering",
+          rollNumber: "DEMO003",
+          year: "fourth",
+          course: "B.Tech"
+        },
+        {
+          name: "Demo Student - ECE",
+          email: "demo.student.ece@example.com",
+          branch: "Electronics and Communication Engineering",
+          rollNumber: "DEMO004",
+          year: "first",
+          course: "B.Tech"
+        },
+        {
+          name: "Demo Student - CE",
+          email: "demo.student.ce@example.com",
+          branch: "Civil Engineering",
+          rollNumber: "DEMO005",
+          year: "third",
+          course: "B.Tech"
+        },
+        {
+          name: "Demo Student - ME",
+          email: "demo.student.me@example.com",
+          branch: "Mechanical Engineering",
+          rollNumber: "DEMO006",
+          year: "second",
+          course: "B.Tech"
+        }
+      ];
 
-      // Create demo student user
-      const demoStudentUser = await UserModel.create({
-        name: "Demo Student",
-        email: "demo.student@example.com",
-        password: demoPassword,
-        role: "student"
-      });
+      for (const studentData of demoStudents) {
+        // Create demo student user
+        const demoStudentUser = await UserModel.create({
+          name: studentData.name,
+          email: studentData.email,
+          password: demoPassword,
+          role: "student"
+        });
 
-      // Create demo student profile
-      await StudentProfileModel.create({
-        userId: demoStudentUser._id,
-        rollNumber: "DEMO001",
-        department: "Engineering",
-        branch: "Computer Science and Engineering",
-        year: "third",
-        course: "B.Tech"
-      });
+        // Create demo student profile
+        const demoStudentProfile = await StudentProfileModel.create({
+          userId: demoStudentUser._id,
+          rollNumber: studentData.rollNumber,
+          department: "Engineering",
+          branch: studentData.branch,
+          year: studentData.year,
+          course: studentData.course
+        });
 
-      // Force create demo achievements for the student
-      await this.forceDemoAchievementsCreation(demoStudentUser._id.toString());
+        // Auto-assign teacher based on branch
+        await this.autoAssignTeacherByBranch(demoStudentProfile._id.toString());
+        
+        // Create demo achievements only for the first demo student
+        if (studentData.rollNumber === "DEMO001") {
+          await this.forceDemoAchievementsCreation(demoStudentUser._id.toString());
+        }
+      }
 
       console.log("Demo accounts created successfully");
       console.log("Demo Admin: demo.admin@example.com / demo123");
-      console.log("Demo Teacher: demo.teacher@example.com / demo123");
-      console.log("Demo Student: demo.student@example.com / demo123");
+      console.log("Demo Teachers: demo.teacher.cse@example.com, demo.teacher.it@example.com, demo.teacher.ee@example.com, demo.teacher.ece@example.com, demo.teacher.ce@example.com, demo.teacher.me@example.com / demo123");
+      console.log("Demo Students: demo.student.cse@example.com, demo.student.it@example.com, demo.student.ee@example.com, demo.student.ece@example.com, demo.student.ce@example.com, demo.student.me@example.com / demo123");
     } catch (error) {
       console.error("Error creating demo accounts:", error);
     }
@@ -770,14 +949,19 @@ export class MongoStorage implements IStorage {
       const departments = await DepartmentModel.find().sort({ name: 1 });
       const departmentsWithCounts = await Promise.all(
         departments.map(async (dept) => {
-          const studentsCount = await StudentProfileModel.countDocuments({ department: dept.name });
-          const teachersCount = await UserModel.countDocuments({ role: 'teacher' }); // In a real system, teachers would be assigned to departments
+          // Count students by branch, not department
+          const studentsCount = await StudentProfileModel.countDocuments({ branch: dept.name });
+          // Count teachers by specialization
+          const teachersCount = await UserModel.countDocuments({ 
+            role: 'teacher', 
+            specialization: dept.name 
+          });
           
           return {
             ...dept.toObject(),
             id: dept._id.toString(),
             studentsCount,
-            teachersCount: Math.floor(teachersCount / departments.length) // Distribute teachers evenly for demo
+            teachersCount
           };
         })
       );
@@ -868,6 +1052,30 @@ export class MongoStorage implements IStorage {
       console.log("Demo achievements forcibly created successfully:", createdAchievements.length, "achievements");
     } catch (error) {
       console.error("Error forcibly creating demo achievements:", error);
+    }
+  }
+
+  async clearDemoData() {
+    try {
+      // Delete all demo users (admin, teachers, students)
+      const demoUsers = await UserModel.find({ 
+        email: { $regex: "@example\\.com$" } 
+      });
+      
+      for (const user of demoUsers) {
+        // Delete student profiles for demo students
+        await StudentProfileModel.deleteMany({ userId: user._id });
+        
+        // Delete achievements for demo students
+        await AchievementModel.deleteMany({ studentId: user._id.toString() });
+        
+        // Delete the user
+        await UserModel.deleteOne({ _id: user._id });
+      }
+      
+      console.log("Demo data cleared successfully");
+    } catch (error) {
+      console.error("Error clearing demo data:", error);
     }
   }
 
