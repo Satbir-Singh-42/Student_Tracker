@@ -328,7 +328,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/users/:id", authenticateToken, checkRole(["admin"]), async (req, res) => {
     try {
-      const userId = parseInt(req.params.id);
+      const userId = req.params.id;
+      
+      // Prevent admin from deleting themselves
+      if (userId === req.user.id) {
+        return res.status(400).json({ message: "You cannot delete your own account" });
+      }
+      
       const success = await storage.deleteUser(userId);
       if (!success) {
         return res.status(404).json({ message: "User not found" });

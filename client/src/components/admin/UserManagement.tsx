@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/lib/auth';
 import { User } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -73,6 +74,7 @@ export default function UserManagement() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user: currentUser } = useAuth();
 
   const { data: users, isLoading, error } = useQuery<User[]>({
     queryKey: ['/api/users'],
@@ -327,8 +329,14 @@ export default function UserManagement() {
                       </Button>
                       <Button 
                         variant="ghost" 
-                        className="text-red-600 hover:text-red-800"
-                        onClick={() => openDeleteDialog(user)}
+                        className={`${
+                          user.id === currentUser?.id 
+                            ? 'text-gray-400 cursor-not-allowed' 
+                            : 'text-red-600 hover:text-red-800'
+                        }`}
+                        onClick={() => user.id !== currentUser?.id && openDeleteDialog(user)}
+                        disabled={user.id === currentUser?.id}
+                        title={user.id === currentUser?.id ? "You cannot delete your own account" : "Delete user"}
                       >
                         Delete
                       </Button>
