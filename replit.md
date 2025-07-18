@@ -324,7 +324,14 @@ The application follows a standard full-stack pattern with clear separation betw
 - ✓ Updated client-side UI to disable edit/delete buttons for protected accounts with appropriate tooltips
 - ✓ Enhanced user management security with proper access control and error handling
 
-### January 2025 - Real Departments System & Demo Data Implementation
+### January 2025 - Pie Chart UI Improvements & Real Departments System
+- ✓ Fixed pie chart label positioning and parameter issues across all reporting pages
+- ✓ Increased chart height from h-64 to h-80 for better visibility and legend space
+- ✓ Moved pie chart center position to cy="40%" to make room for bottom legend
+- ✓ Reduced outer radius from 80 to 60 to prevent chart cutoff in smaller containers
+- ✓ Replaced direct pie chart labels with bottom legends for cleaner display
+- ✓ Added proper tooltip formatting with activity counts and improved user experience
+- ✓ Applied consistent chart styling across Statistics, Global Reports, Department Reports, Student Reports, and Admin Dashboard
 - ✓ Implemented complete real departments management system with MongoDB integration
 - ✓ Created comprehensive database schema and models for departments
 - ✓ Added full CRUD API endpoints with proper validation and error handling

@@ -176,18 +176,23 @@ export default function AdminDashboard() {
                           { name: 'Admins', value: getUsersByRole().admins }
                         ]}
                         cx="50%"
-                        cy="50%"
-                        labelLine={true}
-                        outerRadius={80}
+                        cy="40%"
+                        labelLine={false}
+                        outerRadius={60}
                         fill="#8884d8"
                         dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        label={false}
                       >
                         <Cell fill="#1976d2" />
                         <Cell fill="#ff9800" />
                         <Cell fill="#f50057" />
                       </Pie>
-                      <Tooltip />
+                      <Tooltip formatter={(value, name) => [`${value} users`, name]} />
+                      <Legend 
+                        verticalAlign="bottom" 
+                        height={36}
+                        formatter={(value, entry) => `${value}: ${entry.payload.value}`}
+                      />
                     </PieChart>
                   </ResponsiveContainer>
                 )}
