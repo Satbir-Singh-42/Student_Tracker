@@ -133,8 +133,8 @@ export class MongoStorage implements IStorage {
         course: "B.Tech"
       });
 
-      // Create demo achievements for the student
-      await this.createDemoAchievements(demoStudentUser._id.toString());
+      // Force create demo achievements for the student
+      await this.forceDemoAchievementsCreation(demoStudentUser._id.toString());
 
       console.log("Demo accounts created successfully");
       console.log("Demo Admin: demo.admin@example.com / demo123");
@@ -454,9 +454,11 @@ export class MongoStorage implements IStorage {
       // Check if demo achievements already exist
       const existingAchievements = await AchievementModel.countDocuments({ studentId });
       if (existingAchievements > 0) {
-        console.log("Demo achievements already exist");
+        console.log("Demo achievements already exist for student:", studentId);
         return;
       }
+
+      console.log("Creating demo achievements for student:", studentId);
 
       // Create demo achievements with the provided certificates
       const demoAchievements = [
@@ -467,7 +469,9 @@ export class MongoStorage implements IStorage {
           type: "academic",
           dateOfActivity: new Date("2030-06-30"),
           proofUrl: "/uploads/degree_demo_student.pdf",
-          status: "Verified"
+          status: "Verified",
+          createdAt: new Date(),
+          updatedAt: new Date()
         },
         {
           studentId,
@@ -476,14 +480,71 @@ export class MongoStorage implements IStorage {
           type: "co-curricular",
           dateOfActivity: new Date("2023-11-22"),
           proofUrl: "/uploads/participation_demo_student.pdf",
-          status: "Verified"
+          status: "Verified",
+          createdAt: new Date(),
+          updatedAt: new Date()
         }
       ];
 
-      await AchievementModel.insertMany(demoAchievements);
-      console.log("Demo achievements created successfully");
+      const createdAchievements = await AchievementModel.insertMany(demoAchievements);
+      console.log("Demo achievements created successfully:", createdAchievements.length, "achievements");
     } catch (error) {
       console.error("Error creating demo achievements:", error);
+    }
+  }
+
+  private async forceDemoAchievementsCreation(studentId: string) {
+    try {
+      // Delete existing demo achievements first
+      await AchievementModel.deleteMany({ studentId });
+      console.log("Deleted existing demo achievements for student:", studentId);
+
+      // Create demo achievements with the provided certificates
+      const demoAchievements = [
+        {
+          studentId,
+          title: "Bachelor of Science Degree",
+          description: "Graduation certificate for Bachelor of Science degree from Maxwell International School. Awarded to Richard Sanchez on June 30, 2030.",
+          type: "academic",
+          dateOfActivity: new Date("2030-06-30"),
+          proofUrl: "/uploads/degree_demo_student.pdf",
+          status: "Verified",
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          studentId,
+          title: "National Health Seminar Participation",
+          description: "Certificate of participation in National Seminars on 'Health' hosted by the University Of Aldenaire. Awarded to Anna Katrina Marchesi on November 22, 2023.",
+          type: "co-curricular",
+          dateOfActivity: new Date("2023-11-22"),
+          proofUrl: "/uploads/participation_demo_student.pdf",
+          status: "Verified",
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      ];
+
+      const createdAchievements = await AchievementModel.insertMany(demoAchievements);
+      console.log("Demo achievements forcibly created successfully:", createdAchievements.length, "achievements");
+    } catch (error) {
+      console.error("Error forcibly creating demo achievements:", error);
+    }
+  }
+
+  private async ensureDemoAchievements() {
+    try {
+      // Get demo student user
+      const demoStudent = await UserModel.findOne({ email: "demo.student@example.com" });
+      if (!demoStudent) {
+        console.log("Demo student not found, skipping demo achievements creation");
+        return;
+      }
+
+      // Force create demo achievements
+      await this.forceDemoAchievementsCreation(demoStudent._id.toString());
+    } catch (error) {
+      console.error("Error ensuring demo achievements:", error);
     }
   }
 
@@ -556,6 +617,7 @@ export const createStorage = (): IStorage => {
     (storage as any).createOfficialAccounts();
     (storage as any).createDemoAccounts();
     (storage as any).createDefaultDepartments();
+    (storage as any).ensureDemoAchievements();
   }, 1000);
   return storage;
 };

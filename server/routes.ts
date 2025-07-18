@@ -666,37 +666,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/reports/csv", authenticateToken, async (req, res) => {
+  app.get("/api/reports/csv", authenticateToken, checkRole(["admin", "teacher"]), async (req, res) => {
     try {
       let achievements = [];
       
       // Get appropriate achievements based on role
       if (req.user.role === "admin") {
         achievements = await storage.getAllAchievements();
-      } else if (req.user.role === "teacher") {
+        
+        // Check if the requesting admin is a demo account
+        const isDemoAdmin = req.user.email.includes('demo.') && req.user.email.includes('@example.com');
+        
+        if (isDemoAdmin) {
+          // Demo admin sees only achievements from demo accounts
+          const demoUsers = await storage.getUsers();
+          const demoUserIds = demoUsers
+            .filter(user => user.email.includes('demo.') && user.email.includes('@example.com'))
+            .map(user => user.id);
+          achievements = achievements.filter(achievement => demoUserIds.includes(achievement.studentId));
+        } else {
+          // Production admin sees only achievements from production accounts
+          const productionUsers = await storage.getUsers();
+          const productionUserIds = productionUsers
+            .filter(user => !(user.email.includes('demo.') && user.email.includes('@example.com')))
+            .map(user => user.id);
+          achievements = achievements.filter(achievement => productionUserIds.includes(achievement.studentId));
+        }
       } else if (req.user.role === "teacher") {
         // Teachers see achievements from all departments for simplicity in demo
         // In production, we would get the teacher's assigned department
         const teacherDepartment = req.query.department as string || "Computer Science";
         achievements = await storage.getAchievementsByDepartment(teacherDepartment);
-        achievements = await storage.getAchievementsByStudent(req.user.id);
+        
+        // Check if the requesting teacher is a demo account
+        const isDemoTeacher = req.user.email.includes('demo.') && req.user.email.includes('@example.com');
+        
+        if (isDemoTeacher) {
+          // Demo teacher sees only achievements from demo accounts
+          const demoUsers = await storage.getUsers();
+          const demoUserIds = demoUsers
+            .filter(user => user.email.includes('demo.') && user.email.includes('@example.com'))
+            .map(user => user.id);
+          achievements = achievements.filter(achievement => demoUserIds.includes(achievement.studentId));
+        } else {
+          // Production teacher sees only achievements from production accounts
+          const productionUsers = await storage.getUsers();
+          const productionUserIds = productionUsers
+            .filter(user => !(user.email.includes('demo.') && user.email.includes('@example.com')))
+            .map(user => user.id);
+          achievements = achievements.filter(achievement => productionUserIds.includes(achievement.studentId));
+        }
       }
 
       // Format as CSV
-      let csv = "ID,Title,Description,Type,Date of Activity,Status,Last Updated\n";
+      let csv = "ID,Title,Description,Type,Date of Activity,Status,Student Name,Last Updated\n";
       
       for (const achievement of achievements) {
         // Get student name
         const student = await storage.getUser(achievement.studentId);
         const studentName = student ? student.name : "Unknown";
         
-        csv += `${achievement.id},"${achievement.title.replace(/"/g, '""')}","${achievement.description.replace(/"/g, '""')}",${achievement.type},${achievement.dateOfActivity.toISOString().split('T')[0]},${achievement.status},${achievement.lastUpdated.toISOString().split('T')[0]},${studentName}\n`;
+        csv += `${achievement._id},"${achievement.title.replace(/"/g, '""')}","${achievement.description.replace(/"/g, '""')}",${achievement.type},${achievement.dateOfActivity.toISOString().split('T')[0]},${achievement.status},"${studentName}",${achievement.updatedAt.toISOString().split('T')[0]}\n`;
       }
       
       res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', 'attachment; filename=achievements.csv');
+      res.setHeader('Content-Disposition', 'attachment; filename=achievements-report.csv');
       res.send(csv);
     } catch (error) {
+      console.error("Error generating CSV report:", error);
       res.status(500).json({ message: "Failed to generate report" });
     }
   });

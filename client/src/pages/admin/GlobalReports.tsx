@@ -49,11 +49,23 @@ export default function GlobalReports() {
   // Generate and download report
   const downloadReport = async () => {
     try {
+      // Get authentication token
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+
       // In a real app, this would include query parameters for filtering
-      const response = await fetch(`/api/reports/csv?type=${reportType}&range=${dateRange}`);
+      const response = await fetch(`/api/reports/csv?type=${reportType}&range=${dateRange}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
       
       if (!response.ok) {
-        throw new Error('Failed to generate report');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to generate report');
       }
       
       // For CSV report
@@ -63,7 +75,7 @@ export default function GlobalReports() {
         const a = document.createElement('a');
         a.style.display = 'none';
         a.href = url;
-        a.download = `global-achievements-report.csv`;
+        a.download = `achievements-report-${new Date().toISOString().split('T')[0]}.csv`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
@@ -74,9 +86,8 @@ export default function GlobalReports() {
       }
       
       toast({
-        title: 'Global Report Generated',
+        title: 'Report Generated Successfully',
         description: `Your ${reportFormat.toUpperCase()} report has been downloaded`,
-        variant: 'success',
       });
     } catch (error) {
       toast({
