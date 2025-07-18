@@ -776,7 +776,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/departments", authenticateToken, checkRole(["admin", "teacher"]), async (req, res) => {
     try {
       const departments = await storage.getAllDepartments();
-      res.json(departments);
+      
+      // Check if the requesting user is a demo account
+      const isDemoAccount = req.user.email.includes('@example.com');
+      
+      // Get statistics for each department based on account type
+      const departmentStats = await Promise.all(
+        departments.map(async (dept) => {
+          let studentsCount = 0;
+          let teachersCount = 0;
+          let branches: string[] = [];
+          
+          if (isDemoAccount) {
+            // For demo accounts, count only demo users
+            const demoStudents = await storage.getUsers();
+            const demoTeachers = await storage.getUsers();
+            
+            const filteredStudents = demoStudents.filter(user => 
+              user.role === 'student' && user.email.includes('@example.com')
+            );
+            const filteredTeachers = demoTeachers.filter(user => 
+              user.role === 'teacher' && user.email.includes('@example.com')
+            );
+            
+            // Count students by department/branch
+            for (const student of filteredStudents) {
+              try {
+                const profiles = await storage.getStudentProfiles();
+                const profile = profiles.find(p => p.userId === student.id);
+                if (profile && profile.department === dept.name) {
+                  studentsCount++;
+                  if (!branches.includes(profile.branch)) {
+                    branches.push(profile.branch);
+                  }
+                }
+              } catch (error) {
+                // Continue if profile not found
+              }
+            }
+            
+            // Count teachers by department
+            teachersCount = filteredTeachers.length;
+          } else {
+            // For official accounts, count only official users
+            const officialStudents = await storage.getUsers();
+            const officialTeachers = await storage.getUsers();
+            
+            const filteredStudents = officialStudents.filter(user => 
+              user.role === 'student' && !user.email.includes('@example.com')
+            );
+            const filteredTeachers = officialTeachers.filter(user => 
+              user.role === 'teacher' && !user.email.includes('@example.com')
+            );
+            
+            // Count students by department/branch
+            for (const student of filteredStudents) {
+              try {
+                const profiles = await storage.getStudentProfiles();
+                const profile = profiles.find(p => p.userId === student.id);
+                if (profile && profile.department === dept.name) {
+                  studentsCount++;
+                  if (!branches.includes(profile.branch)) {
+                    branches.push(profile.branch);
+                  }
+                }
+              } catch (error) {
+                // Continue if profile not found
+              }
+            }
+            
+            // Count teachers by department
+            teachersCount = filteredTeachers.length;
+          }
+          
+          return {
+            ...dept,
+            studentsCount,
+            teachersCount,
+            branches
+          };
+        })
+      );
+      
+      res.json(departmentStats);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch departments" });
     }

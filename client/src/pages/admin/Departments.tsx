@@ -178,6 +178,18 @@ export default function Departments() {
 
   // Helper function to get teachers and students count by department/branch
   const getDepartmentStats = (departmentName: string) => {
+    // Find the department data from the server response
+    const departmentData = departments?.find(dept => dept.name === departmentName);
+    if (departmentData) {
+      return {
+        teachersCount: departmentData.teachersCount || 0,
+        studentsCount: departmentData.studentsCount || 0,
+        teachers: [],
+        students: []
+      };
+    }
+    
+    // Fallback to original logic if department not found
     const teachers = users?.filter(user => 
       user.role === 'teacher' && user.specialization === departmentName
     ) || [];
