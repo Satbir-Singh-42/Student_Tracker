@@ -69,27 +69,60 @@ A comprehensive full-stack web application for managing student achievements and
    - Open http://localhost:5000 in your browser
    - Use official credentials to access the system
 
-### Official Credentials
+## 🔐 Account Credentials
 
-The application includes official accounts for system access:
+### 🏢 **OFFICIAL PRODUCTION ACCOUNTS**
+**⚠️ FOR REAL SYSTEM USE ONLY - DO NOT USE FOR TESTING**
 
-- **Administrator**: `admin@satvirnagra.com` / `Admin@2025!`
-- **Teacher 1**: `rajesh.kumar@satvirnagra.com` / `Teacher@2025!`
-- **Teacher 2**: `priya.sharma@satvirnagra.com` / `Teacher@2025!`
+- **Production Administrator**: `admin@satvirnagra.com` / `Admin@2025!`
+  - Full system administration access
+  - Real data management and user oversight
+  - Production statistics and reporting
 
-### Demo Accounts
+- **Production Teacher 1**: `rajesh.kumar@satvirnagra.com` / `Teacher@2025!`
+  - Official teacher account for real student verification
+  - Access to actual student submissions
 
-For testing and demonstration purposes, separate demo accounts are available:
+- **Production Teacher 2**: `priya.sharma@satvirnagra.com` / `Teacher@2025!`
+  - Official teacher account for real student verification
+  - Access to actual student submissions
+
+---
+
+### 🧪 **DEMO TESTING ACCOUNTS**
+**✅ SAFE FOR TESTING - NO IMPACT ON REAL DATA**
 
 - **Demo Student**: `demo.student@example.com` / `demo123`
-- **Demo Teacher**: `demo.teacher@example.com` / `demo123`
-- **Demo Administrator**: `demo.admin@example.com` / `demo123`
+  - Test student functionality and submissions
+  - Isolated from production data
 
-**Note**: 
-- Students can register directly through the registration page using their own credentials
-- Demo accounts are completely separate from official system data
-- Use demo accounts for testing features without affecting real data
-- Charts and statistics reflect genuine system activity from official accounts
+- **Demo Teacher**: `demo.teacher@example.com` / `demo123`
+  - Test teacher verification workflows
+  - Isolated from production data
+
+- **Demo Administrator**: `demo.admin@example.com` / `demo123`
+  - Test admin features and system management
+  - Isolated from production data
+
+---
+
+### 📋 **Account Usage Guidelines**
+
+**For Administrators:**
+- Use **PRODUCTION accounts** for real system operations
+- Use **DEMO accounts** for testing, demonstrations, and training
+- Demo accounts have no impact on production statistics or data
+- All charts and analytics reflect only production account activity
+
+**For New Students:**
+- Register directly through the registration page
+- Use your own credentials for real submissions
+- Do not use demo accounts for actual coursework
+
+**Data Separation:**
+- Production and demo accounts are completely isolated
+- Statistics and reports show only real production data
+- Demo activities do not appear in official system analytics
 
 ## 🚀 Deployment
 
