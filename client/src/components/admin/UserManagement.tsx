@@ -186,7 +186,12 @@ export default function UserManagement() {
 
   const handleEditUser = (values: Partial<User>) => {
     if (selectedUser) {
-      updateUserMutation.mutate({ id: selectedUser.id, userData: values });
+      // Include additional branches in the update
+      const userData = {
+        ...values,
+        additionalBranches: selectedUser.additionalBranches || []
+      };
+      updateUserMutation.mutate({ id: selectedUser.id, userData });
     }
   };
 
@@ -385,7 +390,16 @@ export default function UserManagement() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {user.role === 'teacher' && user.specialization ? user.specialization : '-'}
+                        {user.role === 'teacher' && user.specialization ? (
+                          <div>
+                            <span className="font-medium">{user.specialization}</span>
+                            {user.additionalBranches && user.additionalBranches.length > 0 && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                +{user.additionalBranches.length} additional branch{user.additionalBranches.length > 1 ? 'es' : ''}
+                              </div>
+                            )}
+                          </div>
+                        ) : '-'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -787,31 +801,66 @@ export default function UserManagement() {
 
               {/* Teacher specialization field in edit form */}
               {editForm.watch('role') === 'teacher' && (
-                <FormField
-                  control={editForm.control}
-                  name="specialization"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Specialization Branch</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select specialization branch" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Computer Science and Engineering">Computer Science and Engineering</SelectItem>
-                          <SelectItem value="Electrical Engineering">Electrical Engineering</SelectItem>
-                          <SelectItem value="Information Technology">Information Technology</SelectItem>
-                          <SelectItem value="Electronics and Communication Engineering">Electronics and Communication Engineering</SelectItem>
-                          <SelectItem value="Civil Engineering">Civil Engineering</SelectItem>
-                          <SelectItem value="Mechanical Engineering">Mechanical Engineering</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <>
+                  <FormField
+                    control={editForm.control}
+                    name="specialization"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Primary Specialization Branch</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select primary specialization branch" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Computer Science and Engineering">Computer Science and Engineering</SelectItem>
+                            <SelectItem value="Electrical Engineering">Electrical Engineering</SelectItem>
+                            <SelectItem value="Information Technology">Information Technology</SelectItem>
+                            <SelectItem value="Electronics and Communication Engineering">Electronics and Communication Engineering</SelectItem>
+                            <SelectItem value="Civil Engineering">Civil Engineering</SelectItem>
+                            <SelectItem value="Mechanical Engineering">Mechanical Engineering</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div>
+                    <FormLabel>Additional Branch Access (Admin Grant)</FormLabel>
+                    <p className="text-sm text-gray-500 mb-2">Grant teacher access to verify achievements from additional branches</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {['Computer Science and Engineering', 'Electrical Engineering', 'Information Technology', 
+                        'Electronics and Communication Engineering', 'Civil Engineering', 'Mechanical Engineering'].map((branch) => {
+                        const isCurrentSpecialization = editForm.watch('specialization') === branch;
+                        const currentAdditional = selectedUser?.additionalBranches || [];
+                        const isChecked = currentAdditional.includes(branch);
+                        
+                        return (
+                          <label key={branch} className={`flex items-center text-sm ${isCurrentSpecialization ? 'opacity-50' : ''}`}>
+                            <input
+                              type="checkbox"
+                              disabled={isCurrentSpecialization}
+                              checked={isChecked}
+                              onChange={(e) => {
+                                if (selectedUser) {
+                                  const updated = e.target.checked 
+                                    ? [...currentAdditional, branch]
+                                    : currentAdditional.filter(b => b !== branch);
+                                  setSelectedUser({...selectedUser, additionalBranches: updated});
+                                }
+                              }}
+                              className="mr-2"
+                            />
+                            <span className="truncate">{branch}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
               )}
               
               <DialogFooter className="mt-6">

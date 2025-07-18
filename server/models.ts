@@ -30,8 +30,11 @@ const userSchema = new mongoose.Schema({
   },
   specialization: {
     type: String,
-    default: null  // For teachers - their expertise branch
-  }
+    default: null  // For teachers - their primary expertise branch
+  },
+  additionalBranches: [{
+    type: String  // For teachers - additional branches they can verify (admin granted)
+  }]
 }, {
   timestamps: true
 });

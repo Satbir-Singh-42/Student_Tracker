@@ -361,8 +361,9 @@ export class MongoStorage implements IStorage {
       const teacher = await UserModel.findById(teacherId);
       if (!teacher || teacher.role !== 'teacher') return false;
 
-      // Check if teacher's specialization matches student's branch (any teacher from the branch can verify)
-      return teacher.specialization === studentProfile.branch;
+      // Check if teacher's specialization matches student's branch OR has additional branch access
+      const allowedBranches = [teacher.specialization, ...(teacher.additionalBranches || [])];
+      return allowedBranches.includes(studentProfile.branch);
     } catch (error) {
       console.error("Error checking teacher verification permissions:", error);
       return false;

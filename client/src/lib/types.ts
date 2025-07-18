@@ -8,6 +8,7 @@ export interface User {
   role: "student" | "teacher" | "admin";
   profileImage: string | null;
   specialization?: string;
+  additionalBranches?: string[];
 }
 
 export interface StudentProfile {

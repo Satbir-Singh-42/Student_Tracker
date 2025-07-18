@@ -42,6 +42,18 @@ export default function Departments() {
     staleTime: 30000,
   });
 
+  // Get users data to show teachers and students by branch
+  const { data: users } = useQuery({
+    queryKey: ['/api/users'],
+    staleTime: 30000,
+  });
+
+  // Get student profiles to match students with branches
+  const { data: studentProfiles } = useQuery({
+    queryKey: ['/api/student-profiles'],
+    staleTime: 30000,
+  });
+
   const createForm = useForm({
     resolver: zodResolver(insertDepartmentSchema),
     defaultValues: {
@@ -164,6 +176,24 @@ export default function Departments() {
     setIsDeleteOpen(true);
   };
 
+  // Helper function to get teachers and students count by department/branch
+  const getDepartmentStats = (departmentName: string) => {
+    const teachers = users?.filter(user => 
+      user.role === 'teacher' && user.specialization === departmentName
+    ) || [];
+    
+    const students = studentProfiles?.filter(profile => 
+      profile.branch === departmentName
+    ) || [];
+    
+    return {
+      teachersCount: teachers.length,
+      studentsCount: students.length,
+      teachers,
+      students
+    };
+  };
+
   const filteredDepartments = departments?.filter((department: any) =>
     department.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     department.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -267,16 +297,52 @@ export default function Departments() {
                   {department.description || 'No description available'}
                 </p>
                 
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-sm mb-4">
                   <div className="flex items-center text-gray-600">
                     <GraduationCap className="w-4 h-4 mr-1" />
-                    <span>{department.studentsCount || 0} Students</span>
+                    <span>{getDepartmentStats(department.name).studentsCount} Students</span>
                   </div>
                   <div className="flex items-center text-gray-600">
                     <Users className="w-4 h-4 mr-1" />
-                    <span>{department.teachersCount || 0} Teachers</span>
+                    <span>{getDepartmentStats(department.name).teachersCount} Teachers</span>
                   </div>
                 </div>
+                
+                {/* Show teacher and student names */}
+                {getDepartmentStats(department.name).teachersCount > 0 && (
+                  <div className="mb-3">
+                    <p className="text-xs font-medium text-gray-700 mb-1">Teachers:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {getDepartmentStats(department.name).teachers.slice(0, 3).map((teacher: any) => (
+                        <span key={teacher.id} className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
+                          {teacher.name}
+                        </span>
+                      ))}
+                      {getDepartmentStats(department.name).teachers.length > 3 && (
+                        <span className="text-xs text-gray-500">+{getDepartmentStats(department.name).teachers.length - 3} more</span>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                {getDepartmentStats(department.name).studentsCount > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-gray-700 mb-1">Students:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {getDepartmentStats(department.name).students.slice(0, 3).map((profile: any) => {
+                        const student = users?.find(u => u.id === profile.userId);
+                        return student ? (
+                          <span key={student.id} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                            {student.name}
+                          </span>
+                        ) : null;
+                      })}
+                      {getDepartmentStats(department.name).studentsCount > 3 && (
+                        <span className="text-xs text-gray-500">+{getDepartmentStats(department.name).studentsCount - 3} more</span>
+                      )}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))
