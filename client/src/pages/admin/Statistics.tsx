@@ -198,7 +198,7 @@ export default function Statistics() {
                 <CardDescription>Distribution across different categories</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-64">
+                <div className="h-80">
                   {prepareTypeData().every(item => item.value === 0) ? (
                     <div className="flex items-center justify-center h-full text-gray-500">
                       <div className="text-center">
@@ -212,18 +212,23 @@ export default function Statistics() {
                         <Pie
                           data={prepareTypeData()}
                           cx="50%"
-                          cy="50%"
-                          labelLine={true}
-                          outerRadius={80}
+                          cy="40%"
+                          labelLine={false}
+                          outerRadius={60}
                           fill="#8884d8"
                           dataKey="value"
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          label={false}
                         >
                           {prepareTypeData().map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip />
+                        <Tooltip formatter={(value, name) => [`${value} activities`, name]} />
+                        <Legend 
+                          verticalAlign="bottom" 
+                          height={36}
+                          formatter={(value, entry) => `${value}: ${entry.payload.value}`}
+                        />
                       </PieChart>
                     </ResponsiveContainer>
                   )}
@@ -237,7 +242,7 @@ export default function Statistics() {
                 <CardDescription>Current verification status</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-64">
+                <div className="h-80">
                   {prepareStatusData().every(item => item.value === 0) ? (
                     <div className="flex items-center justify-center h-full text-gray-500">
                       <div className="text-center">
@@ -251,18 +256,23 @@ export default function Statistics() {
                         <Pie
                           data={prepareStatusData()}
                           cx="50%"
-                          cy="50%"
-                          labelLine={true}
-                          outerRadius={80}
+                          cy="40%"
+                          labelLine={false}
+                          outerRadius={60}
                           fill="#8884d8"
                           dataKey="value"
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          label={false}
                         >
                           <Cell fill="#4caf50" />
                           <Cell fill="#ff9800" />
                           <Cell fill="#f44336" />
                         </Pie>
-                        <Tooltip />
+                        <Tooltip formatter={(value, name) => [`${value} activities`, name]} />
+                        <Legend 
+                          verticalAlign="bottom" 
+                          height={36}
+                          formatter={(value, entry) => `${value}: ${entry.payload.value}`}
+                        />
                       </PieChart>
                     </ResponsiveContainer>
                   )}

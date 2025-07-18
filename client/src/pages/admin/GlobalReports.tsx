@@ -339,7 +339,7 @@ export default function GlobalReports() {
                 <CardDescription>Distribution across different categories</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-64">
+                <div className="h-80">
                   {isLoading ? (
                     <div className="flex justify-center items-center h-full">
                       <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
@@ -350,18 +350,23 @@ export default function GlobalReports() {
                         <Pie
                           data={prepareTypeData()}
                           cx="50%"
-                          cy="50%"
-                          labelLine={true}
-                          outerRadius={80}
+                          cy="40%"
+                          labelLine={false}
+                          outerRadius={60}
                           fill="#8884d8"
                           dataKey="value"
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          label={false}
                         >
                           {prepareTypeData().map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip />
+                        <Tooltip formatter={(value, name) => [`${value} activities`, name]} />
+                        <Legend 
+                          verticalAlign="bottom" 
+                          height={36}
+                          formatter={(value, entry) => `${value}: ${entry.payload.value}`}
+                        />
                       </PieChart>
                     </ResponsiveContainer>
                   )}
@@ -375,7 +380,7 @@ export default function GlobalReports() {
                 <CardDescription>Current verification status</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-64">
+                <div className="h-80">
                   {isLoading ? (
                     <div className="flex justify-center items-center h-full">
                       <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
@@ -386,18 +391,23 @@ export default function GlobalReports() {
                         <Pie
                           data={prepareStatusData()}
                           cx="50%"
-                          cy="50%"
-                          labelLine={true}
-                          outerRadius={80}
+                          cy="40%"
+                          labelLine={false}
+                          outerRadius={60}
                           fill="#8884d8"
                           dataKey="value"
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          label={false}
                         >
                           <Cell fill="#4caf50" />
                           <Cell fill="#ff9800" />
                           <Cell fill="#f44336" />
                         </Pie>
-                        <Tooltip />
+                        <Tooltip formatter={(value, name) => [`${value} activities`, name]} />
+                        <Legend 
+                          verticalAlign="bottom" 
+                          height={36}
+                          formatter={(value, entry) => `${value}: ${entry.payload.value}`}
+                        />
                       </PieChart>
                     </ResponsiveContainer>
                   )}
