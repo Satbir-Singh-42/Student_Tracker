@@ -307,10 +307,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/users/:id", authenticateToken, checkRole(["admin"]), async (req, res) => {
     try {
-      const userId = parseInt(req.params.id);
+      const userId = req.params.id;
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
+      }
+
+      // Define protected admin accounts (both real and demo)
+      const protectedAdminEmails = [
+        "admin@satvirnagra.com",
+        "demo.admin@example.com"
+      ];
+
+      // Check if this is a protected admin account
+      if (user.role === "admin" && protectedAdminEmails.includes(user.email)) {
+        return res.status(403).json({ message: "Cannot edit protected admin account" });
       }
 
       const updatedUser = await storage.updateUser(userId, req.body);
@@ -333,6 +344,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Prevent admin from deleting themselves
       if (userId === req.user.id) {
         return res.status(400).json({ message: "You cannot delete your own account" });
+      }
+      
+      // Get user to check if it's a protected admin account
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Define protected admin accounts (both real and demo)
+      const protectedAdminEmails = [
+        "admin@satvirnagra.com",
+        "demo.admin@example.com"
+      ];
+
+      // Check if this is a protected admin account
+      if (user.role === "admin" && protectedAdminEmails.includes(user.email)) {
+        return res.status(403).json({ message: "Cannot delete protected admin account" });
       }
       
       const success = await storage.deleteUser(userId);
