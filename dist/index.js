@@ -165,7 +165,16 @@ var userSchema = new mongoose.Schema({
   profileImage: {
     type: String,
     default: null
-  }
+  },
+  specialization: {
+    type: String,
+    default: null
+    // For teachers - their primary expertise branch
+  },
+  additionalBranches: [{
+    type: String
+    // For teachers - additional branches they can verify (admin granted)
+  }]
 }, {
   timestamps: true
 });
@@ -186,6 +195,11 @@ var studentProfileSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  branch: {
+    type: String,
+    required: true,
+    trim: true
+  },
   year: {
     type: String,
     required: true,
@@ -195,6 +209,11 @@ var studentProfileSchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true
+  },
+  assignedTeacher: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null
   }
 }, {
   timestamps: true
@@ -240,47 +259,118 @@ var achievementSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
+var departmentSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    trim: true,
+    unique: true
+  },
+  code: {
+    type: String,
+    required: true,
+    trim: true,
+    unique: true,
+    uppercase: true
+  },
+  description: {
+    type: String,
+    trim: true,
+    default: null
+  }
+}, {
+  timestamps: true
+});
 var UserModel = mongoose.model("User", userSchema);
 var StudentProfileModel = mongoose.model("StudentProfile", studentProfileSchema);
 var AchievementModel = mongoose.model("Achievement", achievementSchema);
+var DepartmentModel = mongoose.model("Department", departmentSchema);
 
 // server/storage.ts
 import bcrypt from "bcrypt";
 var MongoStorage = class {
-  async createDemoAccounts() {
+  async createOfficialAccounts() {
     try {
-      const existingAdmin = await UserModel.findOne({ email: "admin@example.com" });
+      const existingAdmin = await UserModel.findOne({ email: "admin@satvirnagra.com" });
       if (existingAdmin) {
-        console.log("Demo accounts already exist");
+        console.log("Official accounts already exist");
         return;
       }
-      const hashedPassword = await bcrypt.hash("password123", 10);
+      const adminPassword = await bcrypt.hash("Admin@2025!", 10);
+      const teacherPassword = await bcrypt.hash("Teacher@2025!", 10);
       const adminUser = await UserModel.create({
-        name: "Admin User",
-        email: "admin@example.com",
-        password: hashedPassword,
+        name: "System Administrator",
+        email: "admin@satvirnagra.com",
+        password: adminPassword,
         role: "admin"
       });
-      const teacherUser = await UserModel.create({
-        name: "Teacher User",
-        email: "teacher@example.com",
-        password: hashedPassword,
-        role: "teacher"
+      const teachers = [
+        {
+          name: "Dr. Rajesh Kumar",
+          email: "rajesh.kumar@satvirnagra.com",
+          specialization: "Computer Science and Engineering"
+        },
+        {
+          name: "Prof. Priya Sharma",
+          email: "priya.sharma@satvirnagra.com",
+          specialization: "Information Technology"
+        }
+      ];
+      for (const teacherData of teachers) {
+        await UserModel.create({
+          ...teacherData,
+          password: teacherPassword,
+          role: "teacher"
+        });
+      }
+      console.log("Official accounts created successfully");
+      console.log("Admin: admin@satvirnagra.com / Admin@2025!");
+      console.log("Teachers: rajesh.kumar@satvirnagra.com, priya.sharma@satvirnagra.com / Teacher@2025!");
+    } catch (error) {
+      console.error("Error creating official accounts:", error);
+    }
+  }
+  async createDemoAccounts() {
+    try {
+      const existingDemoAdmin = await UserModel.findOne({ email: "demo.admin@example.com" });
+      if (existingDemoAdmin) {
+        console.log("Demo accounts already exist");
+        await this.clearDemoData();
+      }
+      const demoPassword = await bcrypt.hash("demo123", 10);
+      const demoAdminUser = await UserModel.create({
+        name: "Demo Administrator",
+        email: "demo.admin@example.com",
+        password: demoPassword,
+        role: "admin"
       });
-      const studentUser = await UserModel.create({
-        name: "Student User",
-        email: "student@example.com",
-        password: hashedPassword,
+      const demoTeacher = await UserModel.create({
+        name: "Demo Teacher",
+        email: "demo.teacher@example.com",
+        password: demoPassword,
+        role: "teacher",
+        specialization: "Computer Science and Engineering"
+      });
+      const demoStudentUser = await UserModel.create({
+        name: "Demo Student",
+        email: "demo.student@example.com",
+        password: demoPassword,
         role: "student"
       });
-      await StudentProfileModel.create({
-        userId: studentUser._id,
-        rollNumber: "STU001",
-        department: "Computer Science",
+      const demoStudentProfile = await StudentProfileModel.create({
+        userId: demoStudentUser._id,
+        rollNumber: "DEMO001",
+        department: "Engineering",
+        branch: "Computer Science and Engineering",
         year: "third",
         course: "B.Tech"
       });
+      await this.autoAssignTeacherByBranch(demoStudentProfile._id.toString());
+      await this.forceDemoAchievementsCreation(demoStudentUser._id.toString());
       console.log("Demo accounts created successfully");
+      console.log("Demo Admin: demo.admin@example.com / demo123");
+      console.log("Demo Teacher: demo.teacher@example.com / demo123");
+      console.log("Demo Student: demo.student@example.com / demo123");
     } catch (error) {
       console.error("Error creating demo accounts:", error);
     }
@@ -340,6 +430,15 @@ var MongoStorage = class {
       return [];
     }
   }
+  // Helper method to check if user is demo or official
+  isDemoUser(email) {
+    return email.includes("@example.com");
+  }
+  // Helper method to filter users based on admin type
+  filterUsersByType(users, adminEmail) {
+    const isAdminDemo = this.isDemoUser(adminEmail);
+    return users.filter((user) => this.isDemoUser(user.email) === isAdminDemo);
+  }
   async getUsersByRole(role) {
     try {
       const users = await UserModel.find({ role });
@@ -392,11 +491,256 @@ var MongoStorage = class {
       return void 0;
     }
   }
+  async getAllStudentProfiles() {
+    try {
+      const profiles = await StudentProfileModel.find().populate("userId", "name email").populate("assignedTeacher", "name email");
+      return profiles.map((profile) => ({
+        ...profile.toObject(),
+        id: profile._id.toString(),
+        assignedTeacher: profile.assignedTeacher ? profile.assignedTeacher._id.toString() : void 0
+      }));
+    } catch (error) {
+      console.error("Error getting all student profiles:", error);
+      return [];
+    }
+  }
+  async getStudentsByTeacher(teacherId) {
+    try {
+      const profiles = await StudentProfileModel.find({ assignedTeacher: teacherId }).populate("userId", "name email");
+      return profiles.map((profile) => ({
+        ...profile.toObject(),
+        id: profile._id.toString(),
+        assignedTeacher: teacherId
+      }));
+    } catch (error) {
+      console.error("Error getting students by teacher:", error);
+      return [];
+    }
+  }
+  async getUnassignedStudentProfiles() {
+    try {
+      const profiles = await StudentProfileModel.find({
+        $or: [
+          { assignedTeacher: { $exists: false } },
+          { assignedTeacher: null }
+        ]
+      });
+      return profiles.map((profile) => ({ ...profile.toObject(), id: profile._id.toString() }));
+    } catch (error) {
+      console.error("Error getting unassigned student profiles:", error);
+      return [];
+    }
+  }
+  async getTeachersBySpecialization(specialization) {
+    try {
+      const teachers = await UserModel.find({
+        role: "teacher",
+        specialization
+      });
+      return teachers.map((teacher) => ({ ...teacher.toObject(), id: teacher._id.toString() }));
+    } catch (error) {
+      console.error("Error getting teachers by specialization:", error);
+      return [];
+    }
+  }
+  async canTeacherVerifyAchievement(teacherId, achievementId) {
+    try {
+      const achievement = await AchievementModel.findById(achievementId);
+      if (!achievement) return false;
+      const studentProfile = await StudentProfileModel.findOne({ userId: achievement.studentId });
+      if (!studentProfile) return false;
+      const teacher = await UserModel.findById(teacherId);
+      if (!teacher || teacher.role !== "teacher") return false;
+      if (teacher.specialization === studentProfile.branch) {
+        return true;
+      }
+      const additionalBranches = teacher.additionalBranches || [];
+      return additionalBranches.includes(studentProfile.branch);
+    } catch (error) {
+      console.error("Error checking teacher verification permissions:", error);
+      return false;
+    }
+  }
+  async searchUsers(query) {
+    try {
+      const users = await UserModel.find({
+        $or: [
+          { name: { $regex: query, $options: "i" } },
+          { email: { $regex: query, $options: "i" } },
+          { specialization: { $regex: query, $options: "i" } }
+        ]
+      });
+      return users.map((user) => ({ ...user.toObject(), id: user._id.toString() }));
+    } catch (error) {
+      console.error("Error searching users:", error);
+      return [];
+    }
+  }
+  async searchStudentProfiles(query) {
+    try {
+      const profiles = await StudentProfileModel.find({
+        $or: [
+          { rollNumber: { $regex: query, $options: "i" } },
+          { department: { $regex: query, $options: "i" } },
+          { branch: { $regex: query, $options: "i" } },
+          { course: { $regex: query, $options: "i" } }
+        ]
+      }).populate("userId", "name email");
+      return profiles.map((profile) => ({ ...profile.toObject(), id: profile._id.toString() }));
+    } catch (error) {
+      console.error("Error searching student profiles:", error);
+      return [];
+    }
+  }
+  async assignTeacherToStudent(studentProfileId, teacherId) {
+    try {
+      const profile = await StudentProfileModel.findByIdAndUpdate(
+        studentProfileId,
+        { assignedTeacher: teacherId },
+        { new: true }
+      );
+      return profile ? { ...profile.toObject(), id: profile._id.toString() } : void 0;
+    } catch (error) {
+      console.error("Error assigning teacher to student:", error);
+      return void 0;
+    }
+  }
+  async autoAssignTeacherByBranch(studentProfileId) {
+    try {
+      const studentProfile = await StudentProfileModel.findById(studentProfileId);
+      if (!studentProfile) {
+        return void 0;
+      }
+      const teachers = await UserModel.find({
+        role: "teacher",
+        specialization: studentProfile.branch
+      });
+      if (teachers.length === 0) {
+        console.log(`No teachers found for branch: ${studentProfile.branch}`);
+        const anyTeachers = await UserModel.find({ role: "teacher" });
+        if (anyTeachers.length === 0) {
+          console.log("No teachers available for assignment");
+          return void 0;
+        }
+        const teacherWorkloads2 = await Promise.all(
+          anyTeachers.map(async (teacher) => {
+            const assignedStudents = await StudentProfileModel.countDocuments({
+              assignedTeacher: teacher._id
+            });
+            return {
+              teacher,
+              workload: assignedStudents
+            };
+          })
+        );
+        teacherWorkloads2.sort((a, b) => a.workload - b.workload);
+        const selectedTeacher2 = teacherWorkloads2[0].teacher;
+        const updatedProfile2 = await StudentProfileModel.findByIdAndUpdate(
+          studentProfileId,
+          { assignedTeacher: selectedTeacher2._id },
+          { new: true }
+        );
+        console.log(`Auto-assigned fallback teacher ${selectedTeacher2.name} to student ${studentProfile.rollNumber}`);
+        return updatedProfile2 ? { ...updatedProfile2.toObject(), id: updatedProfile2._id.toString() } : void 0;
+      }
+      const teacherWorkloads = await Promise.all(
+        teachers.map(async (teacher) => {
+          const assignedStudents = await StudentProfileModel.countDocuments({
+            assignedTeacher: teacher._id
+          });
+          return {
+            teacher,
+            workload: assignedStudents
+          };
+        })
+      );
+      teacherWorkloads.sort((a, b) => a.workload - b.workload);
+      const selectedTeacher = teacherWorkloads[0].teacher;
+      const updatedProfile = await StudentProfileModel.findByIdAndUpdate(
+        studentProfileId,
+        { assignedTeacher: selectedTeacher._id },
+        { new: true }
+      );
+      console.log(`Auto-assigned teacher ${selectedTeacher.name} to student ${studentProfile.rollNumber} for branch ${studentProfile.branch}`);
+      return updatedProfile ? { ...updatedProfile.toObject(), id: updatedProfile._id.toString() } : void 0;
+    } catch (error) {
+      console.error("Error auto-assigning teacher:", error);
+      return void 0;
+    }
+  }
+  async removeTeacherFromStudent(studentProfileId) {
+    try {
+      const profile = await StudentProfileModel.findByIdAndUpdate(
+        studentProfileId,
+        { assignedTeacher: null },
+        { new: true }
+      );
+      return profile ? { ...profile.toObject(), id: profile._id.toString() } : void 0;
+    } catch (error) {
+      console.error("Error removing teacher from student:", error);
+      return void 0;
+    }
+  }
+  // Search functionality for users
+  async searchUsers(query) {
+    try {
+      const users = await UserModel.find({
+        $or: [
+          { name: { $regex: query, $options: "i" } },
+          { email: { $regex: query, $options: "i" } },
+          { role: { $regex: query, $options: "i" } },
+          { specialization: { $regex: query, $options: "i" } }
+        ]
+      });
+      return users.map((user) => ({ ...user.toObject(), id: user._id.toString() }));
+    } catch (error) {
+      console.error("Error searching users:", error);
+      return [];
+    }
+  }
+  async getTeachersBySpecialization(specialization) {
+    try {
+      const teachers = await UserModel.find({
+        role: "teacher",
+        specialization: { $regex: specialization, $options: "i" }
+      });
+      return teachers.map((teacher) => ({ ...teacher.toObject(), id: teacher._id.toString() }));
+    } catch (error) {
+      console.error("Error getting teachers by specialization:", error);
+      return [];
+    }
+  }
+  // Search functionality for student profiles
+  async searchStudentProfiles(query) {
+    try {
+      const profiles = await StudentProfileModel.find({
+        $or: [
+          { rollNumber: { $regex: query, $options: "i" } },
+          { department: { $regex: query, $options: "i" } },
+          { branch: { $regex: query, $options: "i" } },
+          { year: { $regex: query, $options: "i" } },
+          { course: { $regex: query, $options: "i" } }
+        ]
+      }).populate("userId", "name email").populate("assignedTeacher", "name email");
+      return profiles.map((profile) => ({
+        ...profile.toObject(),
+        id: profile._id.toString(),
+        assignedTeacher: profile.assignedTeacher ? profile.assignedTeacher._id.toString() : void 0
+      }));
+    } catch (error) {
+      console.error("Error searching student profiles:", error);
+      return [];
+    }
+  }
   // Achievement operations
   async getAchievement(id) {
     try {
       const achievement = await AchievementModel.findById(id);
-      return achievement ? { ...achievement.toObject(), id: achievement._id.toString() } : void 0;
+      return achievement ? {
+        ...achievement.toObject(),
+        id: achievement._id.toString(),
+        studentId: achievement.studentId.toString()
+      } : void 0;
     } catch (error) {
       console.error("Error getting achievement:", error);
       return void 0;
@@ -405,7 +749,11 @@ var MongoStorage = class {
   async getAchievementsByStudent(studentId) {
     try {
       const achievements = await AchievementModel.find({ studentId });
-      return achievements.map((achievement) => ({ ...achievement.toObject(), id: achievement._id.toString() }));
+      return achievements.map((achievement) => ({
+        ...achievement.toObject(),
+        id: achievement._id.toString(),
+        studentId: achievement.studentId.toString()
+      }));
     } catch (error) {
       console.error("Error getting achievements by student:", error);
       return [];
@@ -416,7 +764,11 @@ var MongoStorage = class {
       const profiles = await StudentProfileModel.find({ department });
       const studentIds = profiles.map((profile) => profile.userId);
       const achievements = await AchievementModel.find({ studentId: { $in: studentIds } });
-      return achievements.map((achievement) => ({ ...achievement.toObject(), id: achievement._id.toString() }));
+      return achievements.map((achievement) => ({
+        ...achievement.toObject(),
+        id: achievement._id.toString(),
+        studentId: achievement.studentId.toString()
+      }));
     } catch (error) {
       console.error("Error getting achievements by department:", error);
       return [];
@@ -425,7 +777,11 @@ var MongoStorage = class {
   async getAchievementsByStatus(status) {
     try {
       const achievements = await AchievementModel.find({ status });
-      return achievements.map((achievement) => ({ ...achievement.toObject(), id: achievement._id.toString() }));
+      return achievements.map((achievement) => ({
+        ...achievement.toObject(),
+        id: achievement._id.toString(),
+        studentId: achievement.studentId.toString()
+      }));
     } catch (error) {
       console.error("Error getting achievements by status:", error);
       return [];
@@ -434,7 +790,11 @@ var MongoStorage = class {
   async createAchievement(achievementData) {
     try {
       const achievement = await AchievementModel.create(achievementData);
-      return { ...achievement.toObject(), id: achievement._id.toString() };
+      return {
+        ...achievement.toObject(),
+        id: achievement._id.toString(),
+        studentId: achievement.studentId.toString()
+      };
     } catch (error) {
       console.error("Error creating achievement:", error);
       throw error;
@@ -443,7 +803,11 @@ var MongoStorage = class {
   async updateAchievement(id, achievementData) {
     try {
       const achievement = await AchievementModel.findByIdAndUpdate(id, achievementData, { new: true });
-      return achievement ? { ...achievement.toObject(), id: achievement._id.toString() } : void 0;
+      return achievement ? {
+        ...achievement.toObject(),
+        id: achievement._id.toString(),
+        studentId: achievement.studentId.toString()
+      } : void 0;
     } catch (error) {
       console.error("Error updating achievement:", error);
       return void 0;
@@ -461,17 +825,266 @@ var MongoStorage = class {
   async getAllAchievements() {
     try {
       const achievements = await AchievementModel.find();
-      return achievements.map((achievement) => ({ ...achievement.toObject(), id: achievement._id.toString() }));
+      return achievements.map((achievement) => ({
+        ...achievement.toObject(),
+        id: achievement._id.toString(),
+        studentId: achievement.studentId.toString()
+      }));
     } catch (error) {
       console.error("Error getting all achievements:", error);
       return [];
+    }
+  }
+  // Department operations
+  async getDepartment(id) {
+    try {
+      const department = await DepartmentModel.findById(id);
+      return department ? { ...department.toObject(), id: department._id.toString() } : void 0;
+    } catch (error) {
+      console.error("Error getting department:", error);
+      return void 0;
+    }
+  }
+  async getDepartmentByCode(code) {
+    try {
+      const department = await DepartmentModel.findOne({ code: code.toUpperCase() });
+      return department ? { ...department.toObject(), id: department._id.toString() } : void 0;
+    } catch (error) {
+      console.error("Error getting department by code:", error);
+      return void 0;
+    }
+  }
+  async getDepartmentByName(name) {
+    try {
+      const department = await DepartmentModel.findOne({ name });
+      return department ? { ...department.toObject(), id: department._id.toString() } : void 0;
+    } catch (error) {
+      console.error("Error getting department by name:", error);
+      return void 0;
+    }
+  }
+  async createDepartment(departmentData) {
+    try {
+      const department = await DepartmentModel.create({
+        ...departmentData,
+        code: departmentData.code.toUpperCase()
+      });
+      return { ...department.toObject(), id: department._id.toString() };
+    } catch (error) {
+      console.error("Error creating department:", error);
+      throw error;
+    }
+  }
+  async updateDepartment(id, departmentData) {
+    try {
+      const updateData = { ...departmentData };
+      if (updateData.code) {
+        updateData.code = updateData.code.toUpperCase();
+      }
+      const department = await DepartmentModel.findByIdAndUpdate(id, updateData, { new: true });
+      return department ? { ...department.toObject(), id: department._id.toString() } : void 0;
+    } catch (error) {
+      console.error("Error updating department:", error);
+      return void 0;
+    }
+  }
+  async deleteDepartment(id) {
+    try {
+      const result = await DepartmentModel.findByIdAndDelete(id);
+      return result !== null;
+    } catch (error) {
+      console.error("Error deleting department:", error);
+      return false;
+    }
+  }
+  async getAllDepartments() {
+    try {
+      const departments = await DepartmentModel.find().sort({ name: 1 });
+      const departmentsWithCounts = await Promise.all(
+        departments.map(async (dept) => {
+          const studentsCount = await StudentProfileModel.countDocuments({ branch: dept.name });
+          const teachersCount = await UserModel.countDocuments({
+            role: "teacher",
+            specialization: dept.name
+          });
+          return {
+            ...dept.toObject(),
+            id: dept._id.toString(),
+            studentsCount,
+            teachersCount
+          };
+        })
+      );
+      return departmentsWithCounts;
+    } catch (error) {
+      console.error("Error getting all departments:", error);
+      return [];
+    }
+  }
+  async createDemoAchievements(studentId) {
+    try {
+      const existingAchievements = await AchievementModel.countDocuments({ studentId });
+      if (existingAchievements > 0) {
+        console.log("Demo achievements already exist for student:", studentId);
+        return;
+      }
+      console.log("Creating demo achievements for student:", studentId);
+      const demoAchievements = [
+        {
+          studentId,
+          title: "Bachelor of Science Degree",
+          description: "Graduation certificate for Bachelor of Science degree from Maxwell International School. Awarded to Richard Sanchez on June 30, 2030.",
+          type: "academic",
+          dateOfActivity: /* @__PURE__ */ new Date("2030-06-30"),
+          proofUrl: "/uploads/degree_demo_student.pdf",
+          status: "Verified",
+          createdAt: /* @__PURE__ */ new Date(),
+          updatedAt: /* @__PURE__ */ new Date()
+        },
+        {
+          studentId,
+          title: "National Health Seminar Participation",
+          description: "Certificate of participation in National Seminars on 'Health' hosted by the University Of Aldenaire. Awarded to Anna Katrina Marchesi on November 22, 2023.",
+          type: "co-curricular",
+          dateOfActivity: /* @__PURE__ */ new Date("2023-11-22"),
+          proofUrl: "/uploads/participation_demo_student.pdf",
+          status: "Verified",
+          createdAt: /* @__PURE__ */ new Date(),
+          updatedAt: /* @__PURE__ */ new Date()
+        }
+      ];
+      const createdAchievements = await AchievementModel.insertMany(demoAchievements);
+      console.log("Demo achievements created successfully:", createdAchievements.length, "achievements");
+    } catch (error) {
+      console.error("Error creating demo achievements:", error);
+    }
+  }
+  async forceDemoAchievementsCreation(studentId) {
+    try {
+      await AchievementModel.deleteMany({ studentId });
+      console.log("Deleted existing demo achievements for student:", studentId);
+      const demoAchievements = [
+        {
+          studentId,
+          title: "Bachelor of Science Degree",
+          description: "Graduation certificate for Bachelor of Science degree from Maxwell International School. Awarded to Richard Sanchez on June 30, 2030.",
+          type: "academic",
+          dateOfActivity: /* @__PURE__ */ new Date("2030-06-30"),
+          proofUrl: "/uploads/degree_demo_student.pdf",
+          status: "Verified",
+          createdAt: /* @__PURE__ */ new Date(),
+          updatedAt: /* @__PURE__ */ new Date()
+        },
+        {
+          studentId,
+          title: "National Health Seminar Participation",
+          description: "Certificate of participation in National Seminars on 'Health' hosted by the University Of Aldenaire. Awarded to Anna Katrina Marchesi on November 22, 2023.",
+          type: "co-curricular",
+          dateOfActivity: /* @__PURE__ */ new Date("2023-11-22"),
+          proofUrl: "/uploads/participation_demo_student.pdf",
+          status: "Verified",
+          createdAt: /* @__PURE__ */ new Date(),
+          updatedAt: /* @__PURE__ */ new Date()
+        }
+      ];
+      const createdAchievements = await AchievementModel.insertMany(demoAchievements);
+      console.log("Demo achievements forcibly created successfully:", createdAchievements.length, "achievements");
+    } catch (error) {
+      console.error("Error forcibly creating demo achievements:", error);
+    }
+  }
+  async clearAllData() {
+    try {
+      await AchievementModel.deleteMany({});
+      await StudentProfileModel.deleteMany({});
+      await UserModel.deleteMany({});
+      console.log("All data cleared successfully");
+    } catch (error) {
+      console.error("Error clearing all data:", error);
+    }
+  }
+  async clearDemoData() {
+    try {
+      const demoUsers = await UserModel.find({
+        email: { $regex: "@example\\.com$" }
+      });
+      for (const user of demoUsers) {
+        await StudentProfileModel.deleteMany({ userId: user._id });
+        await AchievementModel.deleteMany({ studentId: user._id.toString() });
+        await UserModel.deleteOne({ _id: user._id });
+      }
+      console.log("Demo data cleared successfully");
+    } catch (error) {
+      console.error("Error clearing demo data:", error);
+    }
+  }
+  async ensureDemoAchievements() {
+    try {
+      const demoStudent = await UserModel.findOne({ email: "demo.student@example.com" });
+      if (!demoStudent) {
+        console.log("Demo student not found, skipping demo achievements creation");
+        return;
+      }
+      await this.forceDemoAchievementsCreation(demoStudent._id.toString());
+    } catch (error) {
+      console.error("Error ensuring demo achievements:", error);
+    }
+  }
+  async createDefaultDepartments() {
+    try {
+      const existingDepartments = await DepartmentModel.countDocuments();
+      if (existingDepartments > 0) {
+        console.log("Departments already exist");
+        return;
+      }
+      const defaultDepartments = [
+        {
+          name: "Computer Science and Engineering",
+          code: "CSE",
+          description: "B.Tech and M.Tech programs in Computer Science and Engineering focusing on software development, algorithms, and computer systems."
+        },
+        {
+          name: "Electrical Engineering",
+          code: "EE",
+          description: "B.Tech and M.Tech programs in Electrical Engineering specializing in electrical systems, power, and control engineering."
+        },
+        {
+          name: "Information Technology",
+          code: "IT",
+          description: "B.Tech and M.Tech programs in Information Technology focusing on software systems, networking, and IT infrastructure."
+        },
+        {
+          name: "Electronics and Communication Engineering",
+          code: "ECE",
+          description: "B.Tech and M.Tech programs in Electronics and Communication Engineering specializing in electronic systems and communication technologies."
+        },
+        {
+          name: "Civil Engineering",
+          code: "CE",
+          description: "B.Tech and M.Tech programs in Civil Engineering focusing on infrastructure, construction, and urban planning."
+        },
+        {
+          name: "Mechanical Engineering",
+          code: "ME",
+          description: "B.Tech and M.Tech programs in Mechanical Engineering covering design, manufacturing, and mechanical systems."
+        }
+      ];
+      await DepartmentModel.insertMany(defaultDepartments);
+      console.log("Default departments created successfully");
+    } catch (error) {
+      console.error("Error creating default departments:", error);
     }
   }
 };
 var createStorage = () => {
   const storage = new MongoStorage();
   setTimeout(() => {
-    storage.createDemoAccounts();
+    storage.clearAllData().then(() => {
+      storage.createOfficialAccounts();
+      storage.createDemoAccounts();
+      storage.createDefaultDepartments();
+      storage.ensureDemoAchievements();
+    });
   }, 1e3);
   return storage;
 };
@@ -577,7 +1190,7 @@ function validateBody(schema) {
   };
 }
 var idParamSchema = z.object({
-  id: z.string().transform(Number).refine((n) => n > 0, "ID must be a positive number")
+  id: z.string().min(1, "ID is required")
 });
 var paginationSchema = z.object({
   page: z.string().transform(Number).default("1"),
@@ -599,14 +1212,18 @@ var insertUserSchema = z2.object({
   email: z2.string().email({ message: "Invalid email address" }),
   password: z2.string().min(6, { message: "Password must be at least 6 characters" }),
   role: z2.enum(["student", "teacher", "admin"]),
-  profileImage: z2.string().optional()
+  profileImage: z2.string().optional(),
+  specialization: z2.string().optional()
+  // For teachers - their expertise branch
 });
 var insertStudentProfileSchema = z2.object({
   userId: z2.string().min(1, { message: "User ID is required" }),
   rollNumber: z2.string().min(1, { message: "Roll number is required" }),
   department: z2.string().min(1, { message: "Department is required" }),
+  branch: z2.string().min(1, { message: "Branch is required" }),
   year: z2.string().min(1, { message: "Year is required" }),
-  course: z2.string().min(1, { message: "Course is required" })
+  course: z2.string().min(1, { message: "Course is required" }),
+  assignedTeacher: z2.string().optional()
 });
 var insertAchievementSchema = z2.object({
   studentId: z2.string().min(1, { message: "Student ID is required" }),
@@ -617,6 +1234,11 @@ var insertAchievementSchema = z2.object({
   proofUrl: z2.string().min(1, { message: "Proof URL is required" }),
   status: z2.enum(["Submitted", "Pending", "Verified", "Rejected"]).default("Submitted"),
   feedback: z2.string().optional()
+});
+var insertDepartmentSchema = z2.object({
+  name: z2.string().min(1, { message: "Department name is required" }),
+  code: z2.string().min(1, { message: "Department code is required" }),
+  description: z2.string().optional()
 });
 var loginSchema = z2.object({
   email: z2.string().email({ message: "Invalid email address" }),
@@ -638,6 +1260,7 @@ var studentRegisterSchema = z2.object({
   profileImage: z2.string().optional(),
   rollNumber: z2.string().min(1, { message: "Roll number is required" }),
   department: z2.string().min(1, { message: "Department is required" }),
+  branch: z2.string().min(1, { message: "Branch is required" }),
   year: z2.string().min(1, { message: "Year is required" }),
   course: z2.string().min(1, { message: "Course is required" })
 }).refine((data) => data.password === data.confirmPassword, {
@@ -725,12 +1348,7 @@ async function registerRoutes(app2) {
     if (!user) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
-    let isPasswordValid = false;
-    if (user.email.includes("@example.com") && user.password === validatedData.password) {
-      isPasswordValid = true;
-    } else {
-      isPasswordValid = await bcrypt2.compare(validatedData.password, user.password);
-    }
+    const isPasswordValid = await bcrypt2.compare(validatedData.password, user.password);
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
@@ -778,11 +1396,16 @@ async function registerRoutes(app2) {
     const profileData = {
       userId: newUser.id,
       rollNumber: validatedData.rollNumber,
-      department: validatedData.department,
+      department: "Engineering",
+      // Default to Engineering
+      branch: validatedData.branch,
       year: validatedData.year,
       course: validatedData.course
     };
-    await storage.createStudentProfile(profileData);
+    const newProfile = await storage.createStudentProfile(profileData);
+    if (newProfile) {
+      await storage.autoAssignTeacherByBranch(newProfile.id);
+    }
     const token = jwt.sign(
       { id: newUser.id, email: newUser.email, role: newUser.role, name: newUser.name },
       JWT_SECRET,
@@ -802,7 +1425,16 @@ async function registerRoutes(app2) {
   app2.get("/api/users", authenticateToken, checkRole(["admin"]), async (req, res) => {
     try {
       const users = await storage.getUsers();
-      res.json(users.map((user) => ({
+      const isDemoAdmin = req.user.email.includes("demo.") && req.user.email.includes("@example.com");
+      const filteredUsers = users.filter((user) => {
+        const isUserDemo = user.email.includes("demo.") && user.email.includes("@example.com");
+        if (isDemoAdmin) {
+          return isUserDemo;
+        } else {
+          return !isUserDemo;
+        }
+      });
+      res.json(filteredUsers.map((user) => ({
         id: user.id,
         name: user.name,
         email: user.email,
@@ -815,6 +1447,13 @@ async function registerRoutes(app2) {
   });
   app2.post("/api/users", authenticateToken, checkRole(["admin"]), async (req, res) => {
     try {
+      const isDemoAdmin = req.user.email.includes("demo.") && req.user.email.includes("@example.com");
+      if (isDemoAdmin) {
+        return res.status(403).json({
+          message: "Demo accounts cannot create new users. This is a demonstration environment with restricted permissions.",
+          type: "demo_restriction"
+        });
+      }
       const validatedData = registerSchema.parse(req.body);
       const existingUserByEmail = await storage.getUserByEmail(validatedData.email);
       if (existingUserByEmail) {
@@ -826,7 +1465,9 @@ async function registerRoutes(app2) {
         email: validatedData.email,
         password: hashedPassword,
         role: validatedData.role,
-        profileImage: null
+        profileImage: null,
+        specialization: validatedData.role === "teacher" ? validatedData.specialization : void 0,
+        additionalBranches: []
       };
       const newUser = await storage.createUser(userData);
       if (validatedData.role === "student" && "rollNumber" in validatedData) {
@@ -834,11 +1475,16 @@ async function registerRoutes(app2) {
         const profileData = {
           userId: newUser.id,
           rollNumber: studentData.rollNumber,
-          department: studentData.department,
+          department: "Engineering",
+          // Default to Engineering
+          branch: studentData.branch,
           year: studentData.year,
           course: studentData.course
         };
-        await storage.createStudentProfile(profileData);
+        const newProfile = await storage.createStudentProfile(profileData);
+        if (newProfile) {
+          await storage.autoAssignTeacherByBranch(newProfile.id);
+        }
       }
       res.status(201).json({
         id: newUser.id,
@@ -857,10 +1503,19 @@ async function registerRoutes(app2) {
   });
   app2.put("/api/users/:id", authenticateToken, checkRole(["admin"]), async (req, res) => {
     try {
-      const userId = parseInt(req.params.id);
+      const userId = req.params.id;
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
+      }
+      const protectedEmails = [
+        "admin@satvirnagra.com",
+        "demo.admin@example.com",
+        "demo.teacher@example.com",
+        "demo.student@example.com"
+      ];
+      if (protectedEmails.includes(user.email)) {
+        return res.status(403).json({ message: "Cannot edit protected account" });
       }
       const updatedUser = await storage.updateUser(userId, req.body);
       res.json({
@@ -876,7 +1531,23 @@ async function registerRoutes(app2) {
   });
   app2.delete("/api/users/:id", authenticateToken, checkRole(["admin"]), async (req, res) => {
     try {
-      const userId = parseInt(req.params.id);
+      const userId = req.params.id;
+      if (userId === req.user.id) {
+        return res.status(400).json({ message: "You cannot delete your own account" });
+      }
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      const protectedEmails = [
+        "admin@satvirnagra.com",
+        "demo.admin@example.com",
+        "demo.teacher@example.com",
+        "demo.student@example.com"
+      ];
+      if (protectedEmails.includes(user.email)) {
+        return res.status(403).json({ message: "Cannot delete protected account" });
+      }
       const success = await storage.deleteUser(userId);
       if (!success) {
         return res.status(404).json({ message: "User not found" });
@@ -891,9 +1562,29 @@ async function registerRoutes(app2) {
       let achievements;
       if (req.user.role === "admin") {
         achievements = await storage.getAllAchievements();
+        const isDemoAdmin = req.user.email.includes("demo.") && req.user.email.includes("@example.com");
+        if (isDemoAdmin) {
+          const demoUsers = await storage.getUsers();
+          const demoUserIds = demoUsers.filter((user) => user.email.includes("demo.") && user.email.includes("@example.com")).map((user) => user.id);
+          achievements = achievements.filter((achievement) => demoUserIds.includes(achievement.studentId));
+        } else {
+          const productionUsers = await storage.getUsers();
+          const productionUserIds = productionUsers.filter((user) => !(user.email.includes("demo.") && user.email.includes("@example.com"))).map((user) => user.id);
+          achievements = achievements.filter((achievement) => productionUserIds.includes(achievement.studentId));
+        }
       } else if (req.user.role === "teacher") {
         const teacherDepartment = req.query.department || "Computer Science";
         achievements = await storage.getAchievementsByDepartment(teacherDepartment);
+        const isDemoTeacher = req.user.email.includes("demo.") && req.user.email.includes("@example.com");
+        if (isDemoTeacher) {
+          const demoUsers = await storage.getUsers();
+          const demoUserIds = demoUsers.filter((user) => user.email.includes("demo.") && user.email.includes("@example.com")).map((user) => user.id);
+          achievements = achievements.filter((achievement) => demoUserIds.includes(achievement.studentId));
+        } else {
+          const productionUsers = await storage.getUsers();
+          const productionUserIds = productionUsers.filter((user) => !(user.email.includes("demo.") && user.email.includes("@example.com"))).map((user) => user.id);
+          achievements = achievements.filter((achievement) => productionUserIds.includes(achievement.studentId));
+        }
       } else {
         achievements = await storage.getAchievementsByStudent(req.user.id);
       }
@@ -904,7 +1595,7 @@ async function registerRoutes(app2) {
   });
   app2.get("/api/achievements/:id", authenticateToken, async (req, res) => {
     try {
-      const achievementId = parseInt(req.params.id);
+      const achievementId = req.params.id;
       const achievement = await storage.getAchievement(achievementId);
       if (!achievement) {
         return res.status(404).json({ message: "Achievement not found" });
@@ -954,13 +1645,21 @@ async function registerRoutes(app2) {
   });
   app2.put("/api/achievements/:id", authenticateToken, async (req, res) => {
     try {
-      const achievementId = parseInt(req.params.id);
+      const achievementId = req.params.id;
       const achievement = await storage.getAchievement(achievementId);
       if (!achievement) {
         return res.status(404).json({ message: "Achievement not found" });
       }
       if (req.user.role === "student" && achievement.studentId !== req.user.id) {
         return res.status(403).json({ message: "Access denied" });
+      }
+      if (req.user.role === "teacher" && (req.body.status || req.body.feedback)) {
+        const canVerify = await storage.canTeacherVerifyAchievement(req.user.id, achievementId);
+        if (!canVerify) {
+          return res.status(403).json({
+            message: "You can only verify achievements from students in your specialization branch"
+          });
+        }
       }
       if (req.user.role === "student" && achievement.status !== "Rejected") {
         return res.status(400).json({ message: "Only rejected achievements can be updated" });
@@ -982,7 +1681,7 @@ async function registerRoutes(app2) {
   });
   app2.delete("/api/achievements/:id", authenticateToken, checkRole(["student", "admin"]), async (req, res) => {
     try {
-      const achievementId = parseInt(req.params.id);
+      const achievementId = req.params.id;
       const achievement = await storage.getAchievement(achievementId);
       if (!achievement) {
         return res.status(404).json({ message: "Achievement not found" });
@@ -1017,9 +1716,29 @@ async function registerRoutes(app2) {
       };
       if (req.user.role === "admin") {
         achievements = await storage.getAllAchievements();
+        const isDemoAdmin = req.user.email.includes("demo.") && req.user.email.includes("@example.com");
+        if (isDemoAdmin) {
+          const demoUsers = await storage.getUsers();
+          const demoUserIds = demoUsers.filter((user) => user.email.includes("demo.") && user.email.includes("@example.com")).map((user) => user.id);
+          achievements = achievements.filter((achievement) => demoUserIds.includes(achievement.studentId));
+        } else {
+          const productionUsers = await storage.getUsers();
+          const productionUserIds = productionUsers.filter((user) => !(user.email.includes("demo.") && user.email.includes("@example.com"))).map((user) => user.id);
+          achievements = achievements.filter((achievement) => productionUserIds.includes(achievement.studentId));
+        }
       } else if (req.user.role === "teacher") {
         const teacherDepartment = req.query.department || "Computer Science";
         achievements = await storage.getAchievementsByDepartment(teacherDepartment);
+        const isDemoTeacher = req.user.email.includes("demo.") && req.user.email.includes("@example.com");
+        if (isDemoTeacher) {
+          const demoUsers = await storage.getUsers();
+          const demoUserIds = demoUsers.filter((user) => user.email.includes("demo.") && user.email.includes("@example.com")).map((user) => user.id);
+          achievements = achievements.filter((achievement) => demoUserIds.includes(achievement.studentId));
+        } else {
+          const productionUsers = await storage.getUsers();
+          const productionUserIds = productionUsers.filter((user) => !(user.email.includes("demo.") && user.email.includes("@example.com"))).map((user) => user.id);
+          achievements = achievements.filter((achievement) => productionUserIds.includes(achievement.studentId));
+        }
       } else {
         achievements = await storage.getAchievementsByStudent(req.user.id);
       }
@@ -1042,29 +1761,376 @@ async function registerRoutes(app2) {
       res.status(500).json({ message: "Failed to fetch statistics" });
     }
   });
-  app2.get("/api/reports/csv", authenticateToken, async (req, res) => {
+  app2.get("/api/reports/csv", authenticateToken, checkRole(["admin", "teacher"]), async (req, res) => {
     try {
       let achievements = [];
       if (req.user.role === "admin") {
         achievements = await storage.getAllAchievements();
-      } else if (req.user.role === "teacher") {
+        const isDemoAdmin = req.user.email.includes("demo.") && req.user.email.includes("@example.com");
+        if (isDemoAdmin) {
+          const demoUsers = await storage.getUsers();
+          const demoUserIds = demoUsers.filter((user) => user.email.includes("demo.") && user.email.includes("@example.com")).map((user) => user.id);
+          achievements = achievements.filter((achievement) => demoUserIds.includes(achievement.studentId));
+        } else {
+          const productionUsers = await storage.getUsers();
+          const productionUserIds = productionUsers.filter((user) => !(user.email.includes("demo.") && user.email.includes("@example.com"))).map((user) => user.id);
+          achievements = achievements.filter((achievement) => productionUserIds.includes(achievement.studentId));
+        }
       } else if (req.user.role === "teacher") {
         const teacherDepartment = req.query.department || "Computer Science";
         achievements = await storage.getAchievementsByDepartment(teacherDepartment);
-        achievements = await storage.getAchievementsByStudent(req.user.id);
+        const isDemoTeacher = req.user.email.includes("demo.") && req.user.email.includes("@example.com");
+        if (isDemoTeacher) {
+          const demoUsers = await storage.getUsers();
+          const demoUserIds = demoUsers.filter((user) => user.email.includes("demo.") && user.email.includes("@example.com")).map((user) => user.id);
+          achievements = achievements.filter((achievement) => demoUserIds.includes(achievement.studentId));
+        } else {
+          const productionUsers = await storage.getUsers();
+          const productionUserIds = productionUsers.filter((user) => !(user.email.includes("demo.") && user.email.includes("@example.com"))).map((user) => user.id);
+          achievements = achievements.filter((achievement) => productionUserIds.includes(achievement.studentId));
+        }
       }
-      let csv = "ID,Title,Description,Type,Date of Activity,Status,Last Updated\n";
+      let csv = "ID,Title,Description,Type,Date of Activity,Status,Student Name,Last Updated\n";
       for (const achievement of achievements) {
         const student = await storage.getUser(achievement.studentId);
         const studentName = student ? student.name : "Unknown";
-        csv += `${achievement.id},"${achievement.title.replace(/"/g, '""')}","${achievement.description.replace(/"/g, '""')}",${achievement.type},${achievement.dateOfActivity.toISOString().split("T")[0]},${achievement.status},${achievement.lastUpdated.toISOString().split("T")[0]},${studentName}
+        csv += `${achievement._id},"${achievement.title.replace(/"/g, '""')}","${achievement.description.replace(/"/g, '""')}",${achievement.type},${achievement.dateOfActivity.toISOString().split("T")[0]},${achievement.status},"${studentName}",${achievement.updatedAt.toISOString().split("T")[0]}
 `;
       }
       res.setHeader("Content-Type", "text/csv");
-      res.setHeader("Content-Disposition", "attachment; filename=achievements.csv");
+      res.setHeader("Content-Disposition", "attachment; filename=achievements-report.csv");
       res.send(csv);
     } catch (error) {
+      console.error("Error generating CSV report:", error);
       res.status(500).json({ message: "Failed to generate report" });
+    }
+  });
+  app2.get("/api/departments", authenticateToken, checkRole(["admin", "teacher"]), async (req, res) => {
+    try {
+      const departments = await storage.getAllDepartments();
+      const isDemoAccount = req.user.email.includes("@example.com");
+      const departmentStats = await Promise.all(
+        departments.map(async (dept) => {
+          let studentsCount = 0;
+          let teachersCount = 0;
+          let branches = [];
+          if (isDemoAccount) {
+            const demoStudents = await storage.getUsers();
+            const demoTeachers = await storage.getUsers();
+            const filteredStudents = demoStudents.filter(
+              (user) => user.role === "student" && user.email.includes("@example.com")
+            );
+            const filteredTeachers = demoTeachers.filter(
+              (user) => user.role === "teacher" && user.email.includes("@example.com")
+            );
+            for (const student of filteredStudents) {
+              try {
+                const profiles = await storage.getStudentProfiles();
+                const profile = profiles.find((p) => p.userId === student.id);
+                if (profile && profile.department === dept.name) {
+                  studentsCount++;
+                  if (!branches.includes(profile.branch)) {
+                    branches.push(profile.branch);
+                  }
+                }
+              } catch (error) {
+              }
+            }
+            teachersCount = filteredTeachers.length;
+          } else {
+            const officialStudents = await storage.getUsers();
+            const officialTeachers = await storage.getUsers();
+            const filteredStudents = officialStudents.filter(
+              (user) => user.role === "student" && !user.email.includes("@example.com")
+            );
+            const filteredTeachers = officialTeachers.filter(
+              (user) => user.role === "teacher" && !user.email.includes("@example.com")
+            );
+            for (const student of filteredStudents) {
+              try {
+                const profiles = await storage.getStudentProfiles();
+                const profile = profiles.find((p) => p.userId === student.id);
+                if (profile && profile.department === dept.name) {
+                  studentsCount++;
+                  if (!branches.includes(profile.branch)) {
+                    branches.push(profile.branch);
+                  }
+                }
+              } catch (error) {
+              }
+            }
+            teachersCount = filteredTeachers.length;
+          }
+          return {
+            ...dept,
+            studentsCount,
+            teachersCount,
+            branches
+          };
+        })
+      );
+      res.json(departmentStats);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch departments" });
+    }
+  });
+  app2.get("/api/departments/:id", authenticateToken, checkRole(["admin", "teacher"]), async (req, res) => {
+    try {
+      const departmentId = req.params.id;
+      const department = await storage.getDepartment(departmentId);
+      if (!department) {
+        return res.status(404).json({ message: "Department not found" });
+      }
+      res.json(department);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch department" });
+    }
+  });
+  app2.post("/api/departments", authenticateToken, checkRole(["admin"]), async (req, res) => {
+    try {
+      const validatedData = insertDepartmentSchema.parse(req.body);
+      const existingDepartmentByCode = await storage.getDepartmentByCode(validatedData.code);
+      if (existingDepartmentByCode) {
+        return res.status(400).json({ message: "Department code already exists" });
+      }
+      const existingDepartmentByName = await storage.getDepartmentByName(validatedData.name);
+      if (existingDepartmentByName) {
+        return res.status(400).json({ message: "Department name already exists" });
+      }
+      const newDepartment = await storage.createDepartment(validatedData);
+      res.status(201).json(newDepartment);
+    } catch (error) {
+      if (error instanceof z3.ZodError) {
+        const validationErrors = fromZodError(error);
+        return res.status(400).json({ message: validationErrors.message });
+      }
+      res.status(500).json({ message: "Failed to create department" });
+    }
+  });
+  app2.put("/api/departments/:id", authenticateToken, checkRole(["admin"]), async (req, res) => {
+    try {
+      const departmentId = req.params.id;
+      const validatedData = insertDepartmentSchema.partial().parse(req.body);
+      const department = await storage.getDepartment(departmentId);
+      if (!department) {
+        return res.status(404).json({ message: "Department not found" });
+      }
+      if (validatedData.code && validatedData.code !== department.code) {
+        const existingDepartmentByCode = await storage.getDepartmentByCode(validatedData.code);
+        if (existingDepartmentByCode) {
+          return res.status(400).json({ message: "Department code already exists" });
+        }
+      }
+      if (validatedData.name && validatedData.name !== department.name) {
+        const existingDepartmentByName = await storage.getDepartmentByName(validatedData.name);
+        if (existingDepartmentByName) {
+          return res.status(400).json({ message: "Department name already exists" });
+        }
+      }
+      const updatedDepartment = await storage.updateDepartment(departmentId, validatedData);
+      res.json(updatedDepartment);
+    } catch (error) {
+      if (error instanceof z3.ZodError) {
+        const validationErrors = fromZodError(error);
+        return res.status(400).json({ message: validationErrors.message });
+      }
+      res.status(500).json({ message: "Failed to update department" });
+    }
+  });
+  app2.delete("/api/departments/:id", authenticateToken, checkRole(["admin"]), async (req, res) => {
+    try {
+      const departmentId = req.params.id;
+      const department = await storage.getDepartment(departmentId);
+      if (!department) {
+        return res.status(404).json({ message: "Department not found" });
+      }
+      const studentsInDepartment = await storage.getUsersByDepartment(department.name);
+      if (studentsInDepartment.length > 0) {
+        return res.status(400).json({
+          message: "Cannot delete department with enrolled students. Please reassign students first."
+        });
+      }
+      const success = await storage.deleteDepartment(departmentId);
+      if (!success) {
+        return res.status(404).json({ message: "Department not found" });
+      }
+      res.status(204).end();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete department" });
+    }
+  });
+  app2.get("/api/student-profiles", authenticateToken, checkRole(["admin"]), async (req, res) => {
+    try {
+      const profiles = await storage.getAllStudentProfiles();
+      const isDemoAdmin = req.user.email.includes("demo.") && req.user.email.includes("@example.com");
+      if (isDemoAdmin) {
+        const demoUsers = await storage.getUsers();
+        const demoUserIds = demoUsers.filter((user) => user.email.includes("demo.") && user.email.includes("@example.com")).map((user) => user.id);
+        const filteredProfiles = profiles.filter((profile) => demoUserIds.includes(profile.userId));
+        res.json(filteredProfiles);
+      } else {
+        const productionUsers = await storage.getUsers();
+        const productionUserIds = productionUsers.filter((user) => !(user.email.includes("demo.") && user.email.includes("@example.com"))).map((user) => user.id);
+        const filteredProfiles = profiles.filter((profile) => productionUserIds.includes(profile.userId));
+        res.json(filteredProfiles);
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch student profiles" });
+    }
+  });
+  app2.get("/api/teacher/:teacherId/students", authenticateToken, checkRole(["admin", "teacher"]), async (req, res) => {
+    try {
+      const { teacherId } = req.params;
+      const students = await storage.getStudentsByTeacher(teacherId);
+      res.json(students);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch students" });
+    }
+  });
+  app2.post("/api/student-profiles/:studentId/assign-teacher", authenticateToken, checkRole(["admin"]), async (req, res) => {
+    try {
+      const { studentId } = req.params;
+      const { teacherId } = req.body;
+      if (!teacherId) {
+        return res.status(400).json({ message: "Teacher ID is required" });
+      }
+      const teacher = await storage.getUser(teacherId);
+      if (!teacher || teacher.role !== "teacher") {
+        return res.status(400).json({ message: "Invalid teacher ID" });
+      }
+      const updatedProfile = await storage.assignTeacherToStudent(studentId, teacherId);
+      if (!updatedProfile) {
+        return res.status(404).json({ message: "Student profile not found" });
+      }
+      res.json(updatedProfile);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to assign teacher" });
+    }
+  });
+  app2.delete("/api/student-profiles/:studentId/remove-teacher", authenticateToken, checkRole(["admin"]), async (req, res) => {
+    try {
+      const { studentId } = req.params;
+      const updatedProfile = await storage.removeTeacherFromStudent(studentId);
+      if (!updatedProfile) {
+        return res.status(404).json({ message: "Student profile not found" });
+      }
+      res.json(updatedProfile);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to remove teacher assignment" });
+    }
+  });
+  app2.post("/api/student-profiles/:studentId/auto-assign-teacher", authenticateToken, checkRole(["admin"]), async (req, res) => {
+    try {
+      const { studentId } = req.params;
+      const updatedProfile = await storage.autoAssignTeacherByBranch(studentId);
+      if (!updatedProfile) {
+        return res.status(404).json({ message: "Student profile not found or no suitable teacher available" });
+      }
+      res.json({
+        message: "Teacher auto-assigned successfully based on branch",
+        profile: updatedProfile
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to auto-assign teacher" });
+    }
+  });
+  app2.post("/api/auto-assign-all-teachers", authenticateToken, checkRole(["admin"]), async (req, res) => {
+    try {
+      const unassignedProfiles = await storage.getUnassignedStudentProfiles();
+      const results = [];
+      for (const profile of unassignedProfiles) {
+        const updatedProfile = await storage.autoAssignTeacherByBranch(profile.id);
+        if (updatedProfile) {
+          results.push({
+            studentId: profile.id,
+            rollNumber: profile.rollNumber,
+            branch: profile.branch,
+            success: true
+          });
+        } else {
+          results.push({
+            studentId: profile.id,
+            rollNumber: profile.rollNumber,
+            branch: profile.branch,
+            success: false,
+            reason: "No suitable teacher found"
+          });
+        }
+      }
+      res.json({
+        message: "Auto-assignment completed",
+        results,
+        totalProcessed: results.length,
+        successful: results.filter((r) => r.success).length,
+        failed: results.filter((r) => !r.success).length
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to auto-assign teachers" });
+    }
+  });
+  app2.get("/api/search/users", authenticateToken, checkRole(["admin"]), async (req, res) => {
+    try {
+      const { q: query } = req.query;
+      if (!query || typeof query !== "string") {
+        return res.status(400).json({ message: "Search query is required" });
+      }
+      const users = await storage.searchUsers(query);
+      const isDemoAdmin = req.user.email.includes("demo.") && req.user.email.includes("@example.com");
+      const filteredUsers = users.filter((user) => {
+        const isUserDemo = user.email.includes("demo.") && user.email.includes("@example.com");
+        return isDemoAdmin ? isUserDemo : !isUserDemo;
+      });
+      res.json(filteredUsers.map((user) => ({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        specialization: user.specialization
+      })));
+    } catch (error) {
+      res.status(500).json({ message: "Failed to search users" });
+    }
+  });
+  app2.get("/api/search/student-profiles", authenticateToken, checkRole(["admin"]), async (req, res) => {
+    try {
+      const { q: query } = req.query;
+      if (!query || typeof query !== "string") {
+        return res.status(400).json({ message: "Search query is required" });
+      }
+      const profiles = await storage.searchStudentProfiles(query);
+      const isDemoAdmin = req.user.email.includes("demo.") && req.user.email.includes("@example.com");
+      if (isDemoAdmin) {
+        const demoUsers = await storage.getUsers();
+        const demoUserIds = demoUsers.filter((user) => user.email.includes("demo.") && user.email.includes("@example.com")).map((user) => user.id);
+        const filteredProfiles = profiles.filter((profile) => demoUserIds.includes(profile.userId));
+        res.json(filteredProfiles);
+      } else {
+        const productionUsers = await storage.getUsers();
+        const productionUserIds = productionUsers.filter((user) => !(user.email.includes("demo.") && user.email.includes("@example.com"))).map((user) => user.id);
+        const filteredProfiles = profiles.filter((profile) => productionUserIds.includes(profile.userId));
+        res.json(filteredProfiles);
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Failed to search student profiles" });
+    }
+  });
+  app2.get("/api/teachers/by-specialization/:specialization", authenticateToken, checkRole(["admin"]), async (req, res) => {
+    try {
+      const { specialization } = req.params;
+      const teachers = await storage.getTeachersBySpecialization(specialization);
+      const isDemoAdmin = req.user.email.includes("demo.") && req.user.email.includes("@example.com");
+      const filteredTeachers = teachers.filter((teacher) => {
+        const isTeacherDemo = teacher.email.includes("demo.") && teacher.email.includes("@example.com");
+        return isDemoAdmin ? isTeacherDemo : !isTeacherDemo;
+      });
+      res.json(filteredTeachers.map((teacher) => ({
+        id: teacher.id,
+        name: teacher.name,
+        email: teacher.email,
+        specialization: teacher.specialization
+      })));
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch teachers by specialization" });
     }
   });
   return httpServer;
