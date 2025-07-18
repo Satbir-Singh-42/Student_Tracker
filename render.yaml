@@ -3,7 +3,7 @@ services:
     name: student-activity-platform
     env: node
     plan: free
-    buildCommand: node build-no-replit.js
+    buildCommand: npm run build
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
