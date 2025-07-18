@@ -107,7 +107,32 @@ const achievementSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// Department Schema
+const departmentSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    trim: true,
+    unique: true
+  },
+  code: {
+    type: String,
+    required: true,
+    trim: true,
+    unique: true,
+    uppercase: true
+  },
+  description: {
+    type: String,
+    trim: true,
+    default: null
+  }
+}, {
+  timestamps: true
+});
+
 // Create models
 export const UserModel = mongoose.model('User', userSchema);
 export const StudentProfileModel = mongoose.model('StudentProfile', studentProfileSchema);
 export const AchievementModel = mongoose.model('Achievement', achievementSchema);
+export const DepartmentModel = mongoose.model('Department', departmentSchema);

@@ -12,7 +12,8 @@ import {
   studentRegisterSchema,
   insertAchievementSchema,
   insertStudentProfileSchema,
-  insertUserSchema
+  insertUserSchema,
+  insertDepartmentSchema
 } from "@shared/schema";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -697,6 +698,124 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.send(csv);
     } catch (error) {
       res.status(500).json({ message: "Failed to generate report" });
+    }
+  });
+
+  // Department Routes
+  app.get("/api/departments", authenticateToken, checkRole(["admin", "teacher"]), async (req, res) => {
+    try {
+      const departments = await storage.getAllDepartments();
+      res.json(departments);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch departments" });
+    }
+  });
+
+  app.get("/api/departments/:id", authenticateToken, checkRole(["admin", "teacher"]), async (req, res) => {
+    try {
+      const departmentId = req.params.id;
+      const department = await storage.getDepartment(departmentId);
+      
+      if (!department) {
+        return res.status(404).json({ message: "Department not found" });
+      }
+
+      res.json(department);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch department" });
+    }
+  });
+
+  app.post("/api/departments", authenticateToken, checkRole(["admin"]), async (req, res) => {
+    try {
+      const validatedData = insertDepartmentSchema.parse(req.body);
+      
+      // Check for duplicate department code
+      const existingDepartmentByCode = await storage.getDepartmentByCode(validatedData.code);
+      if (existingDepartmentByCode) {
+        return res.status(400).json({ message: "Department code already exists" });
+      }
+
+      // Check for duplicate department name
+      const existingDepartmentByName = await storage.getDepartmentByName(validatedData.name);
+      if (existingDepartmentByName) {
+        return res.status(400).json({ message: "Department name already exists" });
+      }
+
+      const newDepartment = await storage.createDepartment(validatedData);
+      res.status(201).json(newDepartment);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const validationErrors = fromZodError(error);
+        return res.status(400).json({ message: validationErrors.message });
+      }
+      res.status(500).json({ message: "Failed to create department" });
+    }
+  });
+
+  app.put("/api/departments/:id", authenticateToken, checkRole(["admin"]), async (req, res) => {
+    try {
+      const departmentId = req.params.id;
+      const validatedData = insertDepartmentSchema.partial().parse(req.body);
+      
+      const department = await storage.getDepartment(departmentId);
+      if (!department) {
+        return res.status(404).json({ message: "Department not found" });
+      }
+
+      // Check for duplicate department code if code is being updated
+      if (validatedData.code && validatedData.code !== department.code) {
+        const existingDepartmentByCode = await storage.getDepartmentByCode(validatedData.code);
+        if (existingDepartmentByCode) {
+          return res.status(400).json({ message: "Department code already exists" });
+        }
+      }
+
+      // Check for duplicate department name if name is being updated
+      if (validatedData.name && validatedData.name !== department.name) {
+        const existingDepartmentByName = await storage.getDepartmentByName(validatedData.name);
+        if (existingDepartmentByName) {
+          return res.status(400).json({ message: "Department name already exists" });
+        }
+      }
+
+      const updatedDepartment = await storage.updateDepartment(departmentId, validatedData);
+      res.json(updatedDepartment);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const validationErrors = fromZodError(error);
+        return res.status(400).json({ message: validationErrors.message });
+      }
+      res.status(500).json({ message: "Failed to update department" });
+    }
+  });
+
+  app.delete("/api/departments/:id", authenticateToken, checkRole(["admin"]), async (req, res) => {
+    try {
+      const departmentId = req.params.id;
+      
+      // Check if department exists
+      const department = await storage.getDepartment(departmentId);
+      if (!department) {
+        return res.status(404).json({ message: "Department not found" });
+      }
+
+      // Check if any students are assigned to this department
+      const studentsInDepartment = await storage.getUsersByDepartment(department.name);
+      if (studentsInDepartment.length > 0) {
+        return res.status(400).json({ 
+          message: "Cannot delete department with enrolled students. Please reassign students first." 
+        });
+      }
+
+      const success = await storage.deleteDepartment(departmentId);
+      if (!success) {
+        return res.status(404).json({ message: "Department not found" });
+      }
+      
+      res.status(204).end();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete department" });
     }
   });
 

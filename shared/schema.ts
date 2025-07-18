@@ -30,6 +30,13 @@ export const insertAchievementSchema = z.object({
   feedback: z.string().optional(),
 });
 
+// Department Model Schema
+export const insertDepartmentSchema = z.object({
+  name: z.string().min(1, { message: "Department name is required" }),
+  code: z.string().min(1, { message: "Department code is required" }),
+  description: z.string().optional(),
+});
+
 // Authentication Schemas
 export const loginSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
@@ -97,9 +104,21 @@ export type Achievement = {
   updatedAt: Date;
 };
 
+export type Department = {
+  id: string;
+  name: string;
+  code: string;
+  description?: string;
+  studentsCount?: number;
+  teachersCount?: number;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertStudentProfile = z.infer<typeof insertStudentProfileSchema>;
 export type InsertAchievement = z.infer<typeof insertAchievementSchema>;
+export type InsertDepartment = z.infer<typeof insertDepartmentSchema>;
 export type Login = z.infer<typeof loginSchema>;
 export type Register = z.infer<typeof registerSchema>;
 export type StudentRegister = z.infer<typeof studentRegisterSchema>;

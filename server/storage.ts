@@ -1,5 +1,5 @@
-import { type User, type InsertUser, type StudentProfile, type InsertStudentProfile, type Achievement, type InsertAchievement } from "@shared/schema";
-import { UserModel, StudentProfileModel, AchievementModel } from "./models";
+import { type User, type InsertUser, type StudentProfile, type InsertStudentProfile, type Achievement, type InsertAchievement, type Department, type InsertDepartment } from "@shared/schema";
+import { UserModel, StudentProfileModel, AchievementModel, DepartmentModel } from "./models";
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 
@@ -29,6 +29,15 @@ export interface IStorage {
   updateAchievement(id: string, achievement: Partial<Achievement>): Promise<Achievement | undefined>;
   deleteAchievement(id: string): Promise<boolean>;
   getAllAchievements(): Promise<Achievement[]>;
+  
+  // Department operations
+  getDepartment(id: string): Promise<Department | undefined>;
+  getDepartmentByCode(code: string): Promise<Department | undefined>;
+  getDepartmentByName(name: string): Promise<Department | undefined>;
+  createDepartment(department: InsertDepartment): Promise<Department>;
+  updateDepartment(id: string, department: Partial<Department>): Promise<Department | undefined>;
+  deleteDepartment(id: string): Promise<boolean>;
+  getAllDepartments(): Promise<Department[]>;
 }
 
 // MongoDB storage implementation
@@ -216,6 +225,18 @@ export class MongoStorage implements IStorage {
     }
   }
 
+  async getUsersByDepartment(department: string): Promise<User[]> {
+    try {
+      const profiles = await StudentProfileModel.find({ department });
+      const userIds = profiles.map(profile => profile.userId);
+      const users = await UserModel.find({ _id: { $in: userIds } });
+      return users.map(user => ({ ...user.toObject(), id: user._id.toString() }));
+    } catch (error) {
+      console.error("Error getting users by department:", error);
+      return [];
+    }
+  }
+
   // Student profile operations
   async getStudentProfile(userId: string): Promise<StudentProfile | undefined> {
     try {
@@ -333,6 +354,157 @@ export class MongoStorage implements IStorage {
       return [];
     }
   }
+
+  // Department operations
+  async getDepartment(id: string): Promise<Department | undefined> {
+    try {
+      const department = await DepartmentModel.findById(id);
+      return department ? { ...department.toObject(), id: department._id.toString() } : undefined;
+    } catch (error) {
+      console.error("Error getting department:", error);
+      return undefined;
+    }
+  }
+
+  async getDepartmentByCode(code: string): Promise<Department | undefined> {
+    try {
+      const department = await DepartmentModel.findOne({ code: code.toUpperCase() });
+      return department ? { ...department.toObject(), id: department._id.toString() } : undefined;
+    } catch (error) {
+      console.error("Error getting department by code:", error);
+      return undefined;
+    }
+  }
+
+  async getDepartmentByName(name: string): Promise<Department | undefined> {
+    try {
+      const department = await DepartmentModel.findOne({ name });
+      return department ? { ...department.toObject(), id: department._id.toString() } : undefined;
+    } catch (error) {
+      console.error("Error getting department by name:", error);
+      return undefined;
+    }
+  }
+
+  async createDepartment(departmentData: InsertDepartment): Promise<Department> {
+    try {
+      const department = await DepartmentModel.create({
+        ...departmentData,
+        code: departmentData.code.toUpperCase()
+      });
+      return { ...department.toObject(), id: department._id.toString() };
+    } catch (error) {
+      console.error("Error creating department:", error);
+      throw error;
+    }
+  }
+
+  async updateDepartment(id: string, departmentData: Partial<Department>): Promise<Department | undefined> {
+    try {
+      const updateData = { ...departmentData };
+      if (updateData.code) {
+        updateData.code = updateData.code.toUpperCase();
+      }
+      const department = await DepartmentModel.findByIdAndUpdate(id, updateData, { new: true });
+      return department ? { ...department.toObject(), id: department._id.toString() } : undefined;
+    } catch (error) {
+      console.error("Error updating department:", error);
+      return undefined;
+    }
+  }
+
+  async deleteDepartment(id: string): Promise<boolean> {
+    try {
+      const result = await DepartmentModel.findByIdAndDelete(id);
+      return result !== null;
+    } catch (error) {
+      console.error("Error deleting department:", error);
+      return false;
+    }
+  }
+
+  async getAllDepartments(): Promise<Department[]> {
+    try {
+      const departments = await DepartmentModel.find().sort({ name: 1 });
+      const departmentsWithCounts = await Promise.all(
+        departments.map(async (dept) => {
+          const studentsCount = await StudentProfileModel.countDocuments({ department: dept.name });
+          const teachersCount = await UserModel.countDocuments({ role: 'teacher' }); // In a real system, teachers would be assigned to departments
+          
+          return {
+            ...dept.toObject(),
+            id: dept._id.toString(),
+            studentsCount,
+            teachersCount: Math.floor(teachersCount / departments.length) // Distribute teachers evenly for demo
+          };
+        })
+      );
+      return departmentsWithCounts;
+    } catch (error) {
+      console.error("Error getting all departments:", error);
+      return [];
+    }
+  }
+
+  private async createDefaultDepartments() {
+    try {
+      // Check if departments already exist
+      const existingDepartments = await DepartmentModel.countDocuments();
+      if (existingDepartments > 0) {
+        console.log("Departments already exist");
+        return;
+      }
+
+      // Create default departments
+      const defaultDepartments = [
+        {
+          name: "Computer Science and Engineering",
+          code: "CSE",
+          description: "Computer Science and Engineering Department focusing on software development, algorithms, and computer systems."
+        },
+        {
+          name: "Electronics and Communication Engineering",
+          code: "ECE",
+          description: "Electronics and Communication Engineering Department specializing in electronic systems and communication technologies."
+        },
+        {
+          name: "Mechanical Engineering",
+          code: "MECH",
+          description: "Mechanical Engineering Department covering design, manufacturing, and mechanical systems."
+        },
+        {
+          name: "Civil Engineering",
+          code: "CIVIL",
+          description: "Civil Engineering Department focusing on infrastructure, construction, and urban planning."
+        },
+        {
+          name: "Electrical Engineering",
+          code: "EEE",
+          description: "Electrical Engineering Department specializing in electrical systems, power, and control engineering."
+        },
+        {
+          name: "Information Technology",
+          code: "IT",
+          description: "Information Technology Department focusing on software systems, networking, and IT infrastructure."
+        },
+        {
+          name: "Biotechnology",
+          code: "BIOTECH",
+          description: "Biotechnology Department combining biology and technology for innovative solutions."
+        },
+        {
+          name: "Chemical Engineering",
+          code: "CHEM",
+          description: "Chemical Engineering Department focusing on chemical processes and materials engineering."
+        }
+      ];
+
+      await DepartmentModel.insertMany(defaultDepartments);
+      console.log("Default departments created successfully");
+    } catch (error) {
+      console.error("Error creating default departments:", error);
+    }
+  }
 }
 
 // Create storage instance
@@ -342,6 +514,7 @@ export const createStorage = (): IStorage => {
   setTimeout(() => {
     (storage as any).createOfficialAccounts();
     (storage as any).createDemoAccounts();
+    (storage as any).createDefaultDepartments();
   }, 1000);
   return storage;
 };
