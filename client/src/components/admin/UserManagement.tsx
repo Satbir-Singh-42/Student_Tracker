@@ -282,8 +282,8 @@ export default function UserManagement() {
         <div className="px-6 py-4 border-b border-gray-200 flex flex-col md:flex-row md:items-center justify-between">
           <h2 className="font-medium text-lg mb-3 md:mb-0">Users</h2>
           <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3">
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+            <div className="relative pl-4">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-7">
                 <span className="material-icons text-gray-400">search</span>
               </span>
               <Input
