@@ -16,6 +16,7 @@ export const insertStudentProfileSchema = z.object({
   department: z.string().min(1, { message: "Department is required" }),
   year: z.string().min(1, { message: "Year is required" }),
   course: z.string().min(1, { message: "Course is required" }),
+  assignedTeacher: z.string().optional(),
 });
 
 // Achievement Model Schema
@@ -86,6 +87,7 @@ export type StudentProfile = {
   department: string;
   year: string;
   course: string;
+  assignedTeacher?: string;
   createdAt: Date;
   updatedAt: Date;
 };

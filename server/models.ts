@@ -59,6 +59,11 @@ const studentProfileSchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true
+  },
+  assignedTeacher: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
   }
 }, {
   timestamps: true

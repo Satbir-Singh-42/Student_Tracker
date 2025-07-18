@@ -19,6 +19,10 @@ export interface IStorage {
   getStudentProfile(userId: string): Promise<StudentProfile | undefined>;
   createStudentProfile(profile: InsertStudentProfile): Promise<StudentProfile>;
   updateStudentProfile(userId: string, profile: Partial<StudentProfile>): Promise<StudentProfile | undefined>;
+  getAllStudentProfiles(): Promise<StudentProfile[]>;
+  getStudentsByTeacher(teacherId: string): Promise<StudentProfile[]>;
+  assignTeacherToStudent(studentProfileId: string, teacherId: string): Promise<StudentProfile | undefined>;
+  removeTeacherFromStudent(studentProfileId: string): Promise<StudentProfile | undefined>;
   
   // Achievement operations
   getAchievement(id: string): Promise<Achievement | undefined>;
@@ -259,6 +263,62 @@ export class MongoStorage implements IStorage {
       return profile ? { ...profile.toObject(), id: profile._id.toString() } : undefined;
     } catch (error) {
       console.error("Error updating student profile:", error);
+      return undefined;
+    }
+  }
+
+  async getAllStudentProfiles(): Promise<StudentProfile[]> {
+    try {
+      const profiles = await StudentProfileModel.find().populate('userId', 'name email').populate('assignedTeacher', 'name email');
+      return profiles.map(profile => ({
+        ...profile.toObject(),
+        id: profile._id.toString(),
+        assignedTeacher: profile.assignedTeacher ? profile.assignedTeacher._id.toString() : undefined
+      }));
+    } catch (error) {
+      console.error("Error getting all student profiles:", error);
+      return [];
+    }
+  }
+
+  async getStudentsByTeacher(teacherId: string): Promise<StudentProfile[]> {
+    try {
+      const profiles = await StudentProfileModel.find({ assignedTeacher: teacherId }).populate('userId', 'name email');
+      return profiles.map(profile => ({
+        ...profile.toObject(),
+        id: profile._id.toString(),
+        assignedTeacher: teacherId
+      }));
+    } catch (error) {
+      console.error("Error getting students by teacher:", error);
+      return [];
+    }
+  }
+
+  async assignTeacherToStudent(studentProfileId: string, teacherId: string): Promise<StudentProfile | undefined> {
+    try {
+      const profile = await StudentProfileModel.findByIdAndUpdate(
+        studentProfileId,
+        { assignedTeacher: teacherId },
+        { new: true }
+      );
+      return profile ? { ...profile.toObject(), id: profile._id.toString() } : undefined;
+    } catch (error) {
+      console.error("Error assigning teacher to student:", error);
+      return undefined;
+    }
+  }
+
+  async removeTeacherFromStudent(studentProfileId: string): Promise<StudentProfile | undefined> {
+    try {
+      const profile = await StudentProfileModel.findByIdAndUpdate(
+        studentProfileId,
+        { assignedTeacher: null },
+        { new: true }
+      );
+      return profile ? { ...profile.toObject(), id: profile._id.toString() } : undefined;
+    } catch (error) {
+      console.error("Error removing teacher from student:", error);
       return undefined;
     }
   }

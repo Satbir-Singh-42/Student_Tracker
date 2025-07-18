@@ -866,6 +866,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Teacher-Student Assignment Routes
+
+  // Get all student profiles (Admin only)
+  app.get("/api/student-profiles", authenticateToken, checkRole(["admin"]), async (req, res) => {
+    try {
+      const profiles = await storage.getAllStudentProfiles();
+      
+      // Check if the requesting admin is a demo account
+      const isDemoAdmin = req.user.email.includes('demo.') && req.user.email.includes('@example.com');
+      
+      if (isDemoAdmin) {
+        // Demo admin sees only profiles from demo accounts
+        const demoUsers = await storage.getUsers();
+        const demoUserIds = demoUsers
+          .filter(user => user.email.includes('demo.') && user.email.includes('@example.com'))
+          .map(user => user.id);
+        const filteredProfiles = profiles.filter(profile => demoUserIds.includes(profile.userId));
+        res.json(filteredProfiles);
+      } else {
+        // Production admin sees only profiles from production accounts
+        const productionUsers = await storage.getUsers();
+        const productionUserIds = productionUsers
+          .filter(user => !(user.email.includes('demo.') && user.email.includes('@example.com')))
+          .map(user => user.id);
+        const filteredProfiles = profiles.filter(profile => productionUserIds.includes(profile.userId));
+        res.json(filteredProfiles);
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch student profiles" });
+    }
+  });
+
+  // Get students assigned to a teacher
+  app.get("/api/teacher/:teacherId/students", authenticateToken, checkRole(["admin", "teacher"]), async (req, res) => {
+    try {
+      const { teacherId } = req.params;
+      const students = await storage.getStudentsByTeacher(teacherId);
+      res.json(students);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch students" });
+    }
+  });
+
+  // Assign teacher to student (Admin only)
+  app.post("/api/student-profiles/:studentId/assign-teacher", authenticateToken, checkRole(["admin"]), async (req, res) => {
+    try {
+      const { studentId } = req.params;
+      const { teacherId } = req.body;
+
+      if (!teacherId) {
+        return res.status(400).json({ message: "Teacher ID is required" });
+      }
+
+      // Verify teacher exists and has teacher role
+      const teacher = await storage.getUser(teacherId);
+      if (!teacher || teacher.role !== 'teacher') {
+        return res.status(400).json({ message: "Invalid teacher ID" });
+      }
+
+      const updatedProfile = await storage.assignTeacherToStudent(studentId, teacherId);
+      if (!updatedProfile) {
+        return res.status(404).json({ message: "Student profile not found" });
+      }
+
+      res.json(updatedProfile);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to assign teacher" });
+    }
+  });
+
+  // Remove teacher assignment from student (Admin only)
+  app.delete("/api/student-profiles/:studentId/remove-teacher", authenticateToken, checkRole(["admin"]), async (req, res) => {
+    try {
+      const { studentId } = req.params;
+      const updatedProfile = await storage.removeTeacherFromStudent(studentId);
+      if (!updatedProfile) {
+        return res.status(404).json({ message: "Student profile not found" });
+      }
+
+      res.json(updatedProfile);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to remove teacher assignment" });
+    }
+  });
+
   // Only add error handlers for API routes in development
   // The global error handler will be added after Vite middleware setup
 
