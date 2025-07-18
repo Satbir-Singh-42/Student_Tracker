@@ -52,7 +52,7 @@ export function validateParams<T>(schema: z.ZodSchema<T>) {
 
 // Common validation schemas
 export const idParamSchema = z.object({
-  id: z.string().transform(Number).refine(n => n > 0, 'ID must be a positive number'),
+  id: z.string().min(1, 'ID is required'),
 });
 
 export const paginationSchema = z.object({

@@ -6,7 +6,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { studentRegisterSchema } from '@/lib/types';
+import { studentRegisterSchema } from '@shared/schema';
 import { useRegister } from '@/lib/auth';
 
 export default function RegisterForm() {

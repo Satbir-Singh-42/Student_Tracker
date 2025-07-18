@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from './queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
-import { loginSchema, registerSchema, studentRegisterSchema, User } from './types';
+import { loginSchema, registerSchema, studentRegisterSchema, User } from '@shared/schema';
 
 interface AuthState {
   user: User | null;

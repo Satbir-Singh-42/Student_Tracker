@@ -234,6 +234,17 @@ export class MongoStorage implements IStorage {
     }
   }
 
+  // Helper method to check if user is demo or official
+  private isDemoUser(email: string): boolean {
+    return email.includes('@example.com');
+  }
+
+  // Helper method to filter users based on admin type
+  private filterUsersByType(users: User[], adminEmail: string): User[] {
+    const isAdminDemo = this.isDemoUser(adminEmail);
+    return users.filter(user => this.isDemoUser(user.email) === isAdminDemo);
+  }
+
   async getUsersByRole(role: string): Promise<User[]> {
     try {
       const users = await UserModel.find({ role });
@@ -362,8 +373,13 @@ export class MongoStorage implements IStorage {
       if (!teacher || teacher.role !== 'teacher') return false;
 
       // Check if teacher's specialization matches student's branch OR has additional branch access
-      const allowedBranches = [teacher.specialization, ...(teacher.additionalBranches || [])];
-      return allowedBranches.includes(studentProfile.branch);
+      if (teacher.specialization === studentProfile.branch) {
+        return true;
+      }
+
+      // Check if teacher has additional branch access
+      const additionalBranches = (teacher as any).additionalBranches || [];
+      return additionalBranches.includes(studentProfile.branch);
     } catch (error) {
       console.error("Error checking teacher verification permissions:", error);
       return false;
@@ -433,7 +449,37 @@ export class MongoStorage implements IStorage {
 
       if (teachers.length === 0) {
         console.log(`No teachers found for branch: ${studentProfile.branch}`);
-        return undefined;
+        // Try to find any teacher as fallback
+        const anyTeachers = await UserModel.find({ role: 'teacher' });
+        if (anyTeachers.length === 0) {
+          console.log("No teachers available for assignment");
+          return undefined;
+        }
+        
+        // Get teacher with least workload
+        const teacherWorkloads = await Promise.all(
+          anyTeachers.map(async (teacher) => {
+            const assignedStudents = await StudentProfileModel.countDocuments({
+              assignedTeacher: teacher._id
+            });
+            return {
+              teacher,
+              workload: assignedStudents
+            };
+          })
+        );
+
+        teacherWorkloads.sort((a, b) => a.workload - b.workload);
+        const selectedTeacher = teacherWorkloads[0].teacher;
+        
+        const updatedProfile = await StudentProfileModel.findByIdAndUpdate(
+          studentProfileId,
+          { assignedTeacher: selectedTeacher._id },
+          { new: true }
+        );
+
+        console.log(`Auto-assigned fallback teacher ${selectedTeacher.name} to student ${studentProfile.rollNumber}`);
+        return updatedProfile ? { ...updatedProfile.toObject(), id: updatedProfile._id.toString() } : undefined;
       }
 
       // Get teacher workload (number of assigned students)
@@ -538,78 +584,7 @@ export class MongoStorage implements IStorage {
     }
   }
 
-  // Auto-assign teacher based on student's branch
-  async autoAssignTeacherByBranch(studentProfileId: string): Promise<StudentProfile | undefined> {
-    try {
-      // Get the student profile
-      const studentProfile = await StudentProfileModel.findById(studentProfileId);
-      if (!studentProfile) {
-        throw new Error("Student profile not found");
-      }
 
-      // Find teachers with matching specialization
-      const matchingTeachers = await UserModel.find({ 
-        role: 'teacher',
-        specialization: { $regex: studentProfile.branch, $options: 'i' }
-      });
-
-      if (matchingTeachers.length === 0) {
-        // If no exact match, find any available teacher
-        const availableTeachers = await UserModel.find({ role: 'teacher' });
-        if (availableTeachers.length === 0) {
-          throw new Error("No teachers available for assignment");
-        }
-        
-        // Get teacher with least number of assigned students
-        const teacherWorkloads = await Promise.all(
-          availableTeachers.map(async (teacher) => {
-            const studentCount = await StudentProfileModel.countDocuments({ 
-              assignedTeacher: teacher._id 
-            });
-            return { teacher, studentCount };
-          })
-        );
-        
-        teacherWorkloads.sort((a, b) => a.studentCount - b.studentCount);
-        const selectedTeacher = teacherWorkloads[0].teacher;
-        
-        // Assign the teacher with least workload
-        const updatedProfile = await StudentProfileModel.findByIdAndUpdate(
-          studentProfileId,
-          { assignedTeacher: selectedTeacher._id },
-          { new: true }
-        );
-        
-        return updatedProfile ? { ...updatedProfile.toObject(), id: updatedProfile._id.toString() } : undefined;
-      }
-
-      // If we have matching teachers, find the one with least workload
-      const teacherWorkloads = await Promise.all(
-        matchingTeachers.map(async (teacher) => {
-          const studentCount = await StudentProfileModel.countDocuments({ 
-            assignedTeacher: teacher._id 
-          });
-          return { teacher, studentCount };
-        })
-      );
-      
-      // Sort by workload (ascending) and pick the teacher with least students
-      teacherWorkloads.sort((a, b) => a.studentCount - b.studentCount);
-      const selectedTeacher = teacherWorkloads[0].teacher;
-      
-      // Assign the selected teacher
-      const updatedProfile = await StudentProfileModel.findByIdAndUpdate(
-        studentProfileId,
-        { assignedTeacher: selectedTeacher._id },
-        { new: true }
-      );
-      
-      return updatedProfile ? { ...updatedProfile.toObject(), id: updatedProfile._id.toString() } : undefined;
-    } catch (error) {
-      console.error("Error auto-assigning teacher by branch:", error);
-      return undefined;
-    }
-  }
 
   // Achievement operations
   async getAchievement(id: string): Promise<Achievement | undefined> {
