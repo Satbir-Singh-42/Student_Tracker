@@ -716,57 +716,6 @@ var MongoStorage = class {
       return void 0;
     }
   }
-  // Search functionality for users
-  async searchUsers(query) {
-    try {
-      const users = await UserModel.find({
-        $or: [
-          { name: { $regex: query, $options: "i" } },
-          { email: { $regex: query, $options: "i" } },
-          { role: { $regex: query, $options: "i" } },
-          { specialization: { $regex: query, $options: "i" } }
-        ]
-      });
-      return users.map((user) => ({ ...user.toObject(), id: user._id.toString() }));
-    } catch (error) {
-      console.error("Error searching users:", error);
-      return [];
-    }
-  }
-  async getTeachersBySpecialization(specialization) {
-    try {
-      const teachers = await UserModel.find({
-        role: "teacher",
-        specialization: { $regex: specialization, $options: "i" }
-      });
-      return teachers.map((teacher) => ({ ...teacher.toObject(), id: teacher._id.toString() }));
-    } catch (error) {
-      console.error("Error getting teachers by specialization:", error);
-      return [];
-    }
-  }
-  // Search functionality for student profiles
-  async searchStudentProfiles(query) {
-    try {
-      const profiles = await StudentProfileModel.find({
-        $or: [
-          { rollNumber: { $regex: query, $options: "i" } },
-          { department: { $regex: query, $options: "i" } },
-          { branch: { $regex: query, $options: "i" } },
-          { year: { $regex: query, $options: "i" } },
-          { course: { $regex: query, $options: "i" } }
-        ]
-      }).populate("userId", "name email").populate("assignedTeacher", "name email");
-      return profiles.map((profile) => ({
-        ...profile.toObject(),
-        id: profile._id.toString(),
-        assignedTeacher: profile.assignedTeacher ? profile.assignedTeacher._id.toString() : void 0
-      }));
-    } catch (error) {
-      console.error("Error searching student profiles:", error);
-      return [];
-    }
-  }
   // Achievement operations
   async getAchievement(id) {
     try {
@@ -1139,6 +1088,50 @@ var createStorage = () => {
   return storage;
 };
 
+// server/database.ts
+import mongoose2 from "mongoose";
+var isMongoDBConnected = false;
+var connectDB = async () => {
+  try {
+    const mongoUri = process.env.MONGODB_URI || "mongodb://localhost:27017/student-activity-platform";
+    console.log("Attempting to connect to MongoDB...");
+    await mongoose2.connect(mongoUri, {
+      serverSelectionTimeoutMS: 8e3,
+      // Timeout after 8s instead of 30s
+      socketTimeoutMS: 45e3,
+      // Close sockets after 45s of inactivity
+      maxPoolSize: 10,
+      // Maintain up to 10 socket connections
+      connectTimeoutMS: 1e4,
+      // Give up initial connection after 10 seconds
+      heartbeatFrequencyMS: 1e4
+      // Check server connection every 10 seconds
+    });
+    isMongoDBConnected = true;
+    console.log("\u2705 MongoDB connected successfully");
+    mongoose2.connection.on("disconnected", () => {
+      console.log("MongoDB disconnected");
+      isMongoDBConnected = false;
+    });
+    mongoose2.connection.on("reconnected", () => {
+      console.log("MongoDB reconnected");
+      isMongoDBConnected = true;
+    });
+    mongoose2.connection.on("error", (error) => {
+      console.error("MongoDB connection error:", error);
+      isMongoDBConnected = false;
+    });
+    return true;
+  } catch (error) {
+    console.error("MongoDB connection failed:", error);
+    console.log("\u{1F504} Falling back to in-memory storage for development");
+    isMongoDBConnected = false;
+    return false;
+  }
+};
+var getMongoDBStatus = () => isMongoDBConnected;
+var database_default = connectDB;
+
 // server/routes.ts
 import { z as z3 } from "zod";
 
@@ -1390,7 +1383,19 @@ async function registerRoutes(app2) {
     res.status(200).end();
   });
   app2.get("/api/health", (req, res) => {
-    res.status(200).json({ status: "ok", timestamp: (/* @__PURE__ */ new Date()).toISOString() });
+    res.status(200).json({
+      status: "ok",
+      timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+      uptime: process.uptime(),
+      memory: process.memoryUsage(),
+      database: getMongoDBStatus()
+    });
+  });
+  app2.get("/api/ping", (req, res) => {
+    res.status(200).send("pong");
+  });
+  app2.get("/api/status", (req, res) => {
+    res.status(200).send("Student Activity Record Platform - Server is running");
   });
   app2.post("/api/auth/login", authLimiter, validateBody(loginSchema), asyncHandler(async (req, res) => {
     const validatedData = req.body;
@@ -2104,49 +2109,6 @@ async function registerRoutes(app2) {
   });
   return httpServer;
 }
-
-// server/database.ts
-import mongoose2 from "mongoose";
-var isMongoDBConnected = false;
-var connectDB = async () => {
-  try {
-    const mongoUri = process.env.MONGODB_URI || "mongodb://localhost:27017/student-activity-platform";
-    console.log("Attempting to connect to MongoDB...");
-    await mongoose2.connect(mongoUri, {
-      serverSelectionTimeoutMS: 8e3,
-      // Timeout after 8s instead of 30s
-      socketTimeoutMS: 45e3,
-      // Close sockets after 45s of inactivity
-      maxPoolSize: 10,
-      // Maintain up to 10 socket connections
-      connectTimeoutMS: 1e4,
-      // Give up initial connection after 10 seconds
-      heartbeatFrequencyMS: 1e4
-      // Check server connection every 10 seconds
-    });
-    isMongoDBConnected = true;
-    console.log("\u2705 MongoDB connected successfully");
-    mongoose2.connection.on("disconnected", () => {
-      console.log("MongoDB disconnected");
-      isMongoDBConnected = false;
-    });
-    mongoose2.connection.on("reconnected", () => {
-      console.log("MongoDB reconnected");
-      isMongoDBConnected = true;
-    });
-    mongoose2.connection.on("error", (error) => {
-      console.error("MongoDB connection error:", error);
-      isMongoDBConnected = false;
-    });
-    return true;
-  } catch (error) {
-    console.error("MongoDB connection failed:", error);
-    console.log("\u{1F504} Falling back to in-memory storage for development");
-    isMongoDBConnected = false;
-    return false;
-  }
-};
-var database_default = connectDB;
 
 // server/index.ts
 import path4 from "path";
