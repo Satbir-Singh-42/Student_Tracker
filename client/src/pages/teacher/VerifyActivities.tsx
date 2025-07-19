@@ -69,10 +69,23 @@ export default function VerifyActivities() {
     queryKey: ['/api/users'],
   });
 
-  // Get student name by ID
+  // Fetch student profiles to get roll numbers
+  const { data: studentProfiles } = useQuery({
+    queryKey: ['/api/student-profiles'],
+  });
+
+  // Get student name with roll number by ID
   const getStudentName = (studentId: string) => {
     const student = users?.find((user: any) => user.id === studentId);
-    return student ? student.name : `Student #${studentId}`;
+    const profile = studentProfiles?.find((profile: any) => profile.userId._id === studentId);
+    
+    if (student && profile) {
+      return `${student.name} (${profile.rollNumber})`;
+    } else if (student) {
+      return student.name;
+    } else {
+      return `Student #${studentId}`;
+    }
   };
 
   // Format date

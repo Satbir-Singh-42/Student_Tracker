@@ -214,9 +214,12 @@ The application follows a standard full-stack pattern with clear separation betw
 - ✓ Enhanced data isolation ensures demo and official accounts see properly filtered department statistics
 - ✓ All fake data removed from department activity comparison charts - now uses real achievement data only
 - ✓ Fixed student name display bug: replaced "Student #[ID]" with actual student names across all pages
+- ✓ Enhanced student name display to include roll numbers: "Demo Student (DEMO001)" format throughout application
 - ✓ Added student branch information in Manage Users table showing branch + course details
-- ✓ Updated Admin Dashboard, Global Reports, Department Reports, and Verify Activities to show real student names
-- ✓ Created StudentBranchDisplay component for consistent student profile information display
+- ✓ Updated Admin Dashboard, Global Reports, Department Reports, and Verify Activities to show student names with roll numbers
+- ✓ Enhanced data queries to fetch both user data and student profiles for complete name+roll display
+- ✓ Maintained complete data separation between demo (@example.com) and official (@satvirnagra.com) accounts
+- ✓ Updated README with comprehensive account separation documentation and roll number feature details
 
 ### January 2025 - Migration from Replit Agent to Standard Replit Environment Completed
 - ✓ Successfully migrated project from Replit Agent to standard Replit environment (January 19, 2025)

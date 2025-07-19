@@ -20,8 +20,11 @@ A comprehensive full-stack web application for managing student achievements and
 - **File Upload System**: Secure file handling with 5MB limit for PDFs and images
 - **Dashboard Analytics**: Statistics and reporting capabilities for administrators
 - **Authentication**: JWT-based secure authentication with password hashing
-- **Data Separation**: Complete isolation between demo and production accounts
-- **MongoDB Integration**: Robust database with proper ObjectId handling
+- **Complete Data Separation**: Isolated environments for demo (@example.com) and official (@satvirnagra.com) accounts
+- **Student Information Display**: Shows student names with roll numbers (e.g., "Demo Student (DEMO001)")
+- **Branch-Based Assignment**: Automatic teacher assignment based on student's branch/specialization
+- **Department Analytics**: Real-time department comparison charts with authentic achievement data
+- **MongoDB Integration**: Robust database with proper ObjectId handling and data filtering
 
 ## 🛠 Tech Stack
 
@@ -75,10 +78,66 @@ A comprehensive full-stack web application for managing student achievements and
    ```bash
    npm run dev
    ```
+   
+   The application will be available at `http://localhost:5000`
 
-5. **Access the application**
-   - Open http://localhost:5000 in your browser
-   - Use official credentials to access the system
+## 👥 Demo Accounts
+
+The platform includes pre-configured demo accounts for testing purposes. These accounts operate in complete isolation from official accounts.
+
+### Demo Account Credentials
+- **Demo Admin**: `demo.admin@example.com` / `demo123`
+- **Demo Teacher**: `demo.teacher@example.com` / `demo123`  
+- **Demo Student**: `demo.student@example.com` / `demo123`
+
+### Demo Data
+- Demo student profile: "Demo Student (DEMO001)" in Computer Science and Engineering
+- 2 pre-uploaded achievements with verified status
+- Complete branch-based teacher assignment system
+- Isolated statistics and reporting
+
+## 🏢 Official Accounts
+
+Production accounts use the @satvirnagra.com domain and have complete data separation from demo accounts.
+
+### Official Account Credentials
+- **Admin**: `admin@satvirnagra.com` / `Admin@2025!`
+- **Teacher 1**: `rajesh.kumar@satvirnagra.com` / `Teacher@2025!`
+- **Teacher 2**: `priya.sharma@satvirnagra.com` / `Teacher@2025!`
+
+### Data Isolation Features
+- Demo accounts see only demo users, achievements, and statistics
+- Official accounts see only production users, achievements, and statistics
+- Complete separation in all API endpoints and database queries
+- Independent department statistics and activity comparisons
+- Separate user management interfaces for each account type
+
+## 📊 Key Features Implemented
+
+### Student Information Display
+- Student names displayed with roll numbers: "Demo Student (DEMO001)"
+- Branch specialization shown in user management: "Computer Science and Engineering"
+- Course and year information: "B.Tech - Year third"
+
+### Department Management
+- Real-time department statistics with proper filtering
+- Branch-based teacher specialization assignments
+- Authentic achievement data in comparison charts
+- Teacher workload balancing for student assignments
+
+### Enhanced Security
+- Complete data isolation between account types
+- Protected admin accounts cannot be edited/deleted
+- JWT-based authentication with bcrypt password hashing
+- Rate limiting and CORS security headers
+
+## 🚀 Getting Started
+
+### Quick Start
+1. Clone the repository and install dependencies
+2. Configure environment variables (optional for development)  
+3. Start the development server with `npm run dev`
+4. Access the application at `http://localhost:5000` and use the appropriate credentials below
 
 ## 🔐 Account Credentials
 
