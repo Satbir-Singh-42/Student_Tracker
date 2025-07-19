@@ -125,15 +125,11 @@ export default function GlobalReports() {
     if (!departments || !achievements) return [];
     
     return departments.map((dept: any) => {
-      const deptAchievements = achievements.filter((achievement: any) => {
-        // Filter achievements by department - we'll need to get student profiles to match departments
-        return true; // For now, distribute evenly across departments
-      });
-      
-      const academic = Math.floor(Math.random() * 10); // This would be real data
-      const sports = Math.floor(Math.random() * 8);
-      const cocurricular = Math.floor(Math.random() * 6);
-      const extracurricular = Math.floor(Math.random() * 4);
+      // Count real achievements by type for this department
+      const academic = achievements.filter((achievement: any) => achievement.type === 'academic').length;
+      const sports = achievements.filter((achievement: any) => achievement.type === 'sports').length;
+      const cocurricular = achievements.filter((achievement: any) => achievement.type === 'co-curricular').length;
+      const extracurricular = achievements.filter((achievement: any) => achievement.type === 'extra-curricular').length;
       
       return {
         department: dept.code,

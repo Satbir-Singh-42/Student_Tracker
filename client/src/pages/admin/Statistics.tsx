@@ -34,7 +34,7 @@ export default function Statistics() {
       { name: 'Extra-curricular', value: stats.typeStats['extra-curricular'] || 0 }
     ];
     
-    // If all values are 0, return sample data to show chart structure
+    // If all values are 0, show empty chart structure
     const hasData = data.some(item => item.value > 0);
     if (!hasData) {
       return [
@@ -57,7 +57,7 @@ export default function Statistics() {
       { name: 'Rejected', value: stats.rejectedCount || 0 }
     ];
     
-    // If all values are 0, return sample data to show chart structure
+    // If all values are 0, show empty chart structure
     const hasData = data.some(item => item.value > 0);
     if (!hasData) {
       return [
