@@ -562,60 +562,7 @@ export class MongoStorage implements IStorage {
     }
   }
 
-  // Search functionality for users
-  async searchUsers(query: string): Promise<User[]> {
-    try {
-      const users = await UserModel.find({
-        $or: [
-          { name: { $regex: query, $options: 'i' } },
-          { email: { $regex: query, $options: 'i' } },
-          { role: { $regex: query, $options: 'i' } },
-          { specialization: { $regex: query, $options: 'i' } }
-        ]
-      });
-      return users.map(user => ({ ...user.toObject(), id: user._id.toString() }));
-    } catch (error) {
-      console.error("Error searching users:", error);
-      return [];
-    }
-  }
 
-  async getTeachersBySpecialization(specialization: string): Promise<User[]> {
-    try {
-      const teachers = await UserModel.find({ 
-        role: 'teacher', 
-        specialization: { $regex: specialization, $options: 'i' } 
-      });
-      return teachers.map(teacher => ({ ...teacher.toObject(), id: teacher._id.toString() }));
-    } catch (error) {
-      console.error("Error getting teachers by specialization:", error);
-      return [];
-    }
-  }
-
-  // Search functionality for student profiles
-  async searchStudentProfiles(query: string): Promise<StudentProfile[]> {
-    try {
-      const profiles = await StudentProfileModel.find({
-        $or: [
-          { rollNumber: { $regex: query, $options: 'i' } },
-          { department: { $regex: query, $options: 'i' } },
-          { branch: { $regex: query, $options: 'i' } },
-          { year: { $regex: query, $options: 'i' } },
-          { course: { $regex: query, $options: 'i' } }
-        ]
-      }).populate('userId', 'name email').populate('assignedTeacher', 'name email');
-      
-      return profiles.map(profile => ({
-        ...profile.toObject(),
-        id: profile._id.toString(),
-        assignedTeacher: profile.assignedTeacher ? profile.assignedTeacher._id.toString() : undefined
-      }));
-    } catch (error) {
-      console.error("Error searching student profiles:", error);
-      return [];
-    }
-  }
 
 
 
