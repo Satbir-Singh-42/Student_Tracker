@@ -44,6 +44,10 @@ export default function GlobalReports() {
     queryKey: ['/api/departments'],
   });
 
+  const { data: studentProfiles } = useQuery({
+    queryKey: ['/api/student-profiles'],
+  });
+
   const isLoading = statsLoading || achievementsLoading || departmentsLoading;
 
   // Generate and download report
@@ -122,14 +126,20 @@ export default function GlobalReports() {
 
   // Real data preparation for department comparison
   const prepareDepartmentData = () => {
-    if (!departments || !achievements) return [];
+    if (!departments || !achievements || !studentProfiles) return [];
     
     return departments.map((dept: any) => {
-      // Count real achievements by type for this department
-      const academic = achievements.filter((achievement: any) => achievement.type === 'academic').length;
-      const sports = achievements.filter((achievement: any) => achievement.type === 'sports').length;
-      const cocurricular = achievements.filter((achievement: any) => achievement.type === 'co-curricular').length;
-      const extracurricular = achievements.filter((achievement: any) => achievement.type === 'extra-curricular').length;
+      // Get achievements for students in this department
+      const deptAchievements = achievements.filter((achievement: any) => {
+        const studentProfile = studentProfiles.find((profile: any) => profile.userId === achievement.studentId);
+        return studentProfile && studentProfile.department === dept.name;
+      });
+      
+      // Count achievements by type for this department
+      const academic = deptAchievements.filter((achievement: any) => achievement.type === 'academic').length;
+      const sports = deptAchievements.filter((achievement: any) => achievement.type === 'sports').length;
+      const cocurricular = deptAchievements.filter((achievement: any) => achievement.type === 'co-curricular').length;
+      const extracurricular = deptAchievements.filter((achievement: any) => achievement.type === 'extra-curricular').length;
       
       return {
         department: dept.code,

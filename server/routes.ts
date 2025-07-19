@@ -688,8 +688,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }
             }
             
-            // Count teachers by department
-            teachersCount = filteredTeachers.length;
+            // Count teachers by department - only those with matching specialization
+            for (const teacher of filteredTeachers) {
+              if (teacher.specialization === dept.name) {
+                teachersCount++;
+              }
+            }
           } else {
             // For official accounts, count only official users
             const filteredStudents = await (storage as any).getUsersByRoleFilteredByType('student', req.user.email);
@@ -711,8 +715,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }
             }
             
-            // Count teachers by department
-            teachersCount = filteredTeachers.length;
+            // Count teachers by department - only those with matching specialization
+            for (const teacher of filteredTeachers) {
+              if (teacher.specialization === dept.name) {
+                teachersCount++;
+              }
+            }
           }
           
           return {
