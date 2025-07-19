@@ -628,11 +628,12 @@ export class MongoStorage implements IStorage {
   async createAchievement(achievementData: InsertAchievement): Promise<Achievement> {
     try {
       const achievement = await AchievementModel.create(achievementData);
+      const achievementObj = achievement.toObject();
       return { 
-        ...achievement.toObject(), 
-        id: achievement._id.toString(),
+        ...achievementObj,
+        _id: achievement._id.toString(),
         studentId: achievement.studentId.toString()
-      };
+      } as Achievement;
     } catch (error) {
       console.error("Error creating achievement:", error);
       throw error;

@@ -406,7 +406,7 @@ export default function UserManagement() {
                           </div>
                         ) : user.role === 'student' ? (
                           (() => {
-                            const studentProfile = studentProfiles?.find((profile: any) => profile.userId._id === user.id);
+                            const studentProfile = (studentProfiles as any)?.find?.((profile: any) => profile.userId._id === user.id);
                             if (!studentProfile) {
                               return <span className="text-gray-400 italic">No profile</span>;
                             }

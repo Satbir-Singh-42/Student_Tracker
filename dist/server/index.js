@@ -774,9 +774,10 @@ var MongoStorage = class {
   async createAchievement(achievementData) {
     try {
       const achievement = await AchievementModel.create(achievementData);
+      const achievementObj = achievement.toObject();
       return {
-        ...achievement.toObject(),
-        id: achievement._id.toString(),
+        ...achievementObj,
+        _id: achievement._id.toString(),
         studentId: achievement.studentId.toString()
       };
     } catch (error) {
@@ -1396,6 +1397,35 @@ async function registerRoutes(app2) {
   });
   app2.get("/api/status", (req, res) => {
     res.status(200).send("Student Activity Record Platform - Server is running");
+  });
+  app2.get("/api/monitor", (req, res) => {
+    const dbStatus = getMongoDBStatus();
+    const uptime = process.uptime();
+    const memory = process.memoryUsage();
+    const healthScore = dbStatus && uptime > 0 ? 100 : 0;
+    res.status(200).json({
+      service: "Student Activity Record Platform",
+      status: dbStatus ? "healthy" : "degraded",
+      health_score: healthScore,
+      timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+      uptime_seconds: uptime,
+      uptime_human: `${Math.floor(uptime / 60)} minutes`,
+      database: {
+        connected: dbStatus,
+        type: "MongoDB Atlas"
+      },
+      memory: {
+        used_mb: Math.round(memory.heapUsed / 1024 / 1024),
+        total_mb: Math.round(memory.heapTotal / 1024 / 1024),
+        usage_percent: Math.round(memory.heapUsed / memory.heapTotal * 100)
+      },
+      endpoints: {
+        ping: "/api/ping",
+        health: "/api/health",
+        status: "/api/status",
+        monitor: "/api/monitor"
+      }
+    });
   });
   app2.post("/api/auth/login", authLimiter, validateBody(loginSchema), asyncHandler(async (req, res) => {
     const validatedData = req.body;

@@ -10,7 +10,7 @@ interface StatCardProps {
   subtextColor?: string;
 }
 
-const iconMap = {
+const iconMap: Record<string, any> = {
   bar_chart: BarChart3,
   check_circle: CheckCircle,
   hourglass_empty: Clock,
