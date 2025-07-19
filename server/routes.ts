@@ -228,30 +228,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User Routes
   app.get("/api/users", authenticateToken, checkRole(["admin"]), async (req, res) => {
     try {
-      const users = await storage.getUsers();
+      const users = await (storage as any).getUsersFilteredByType(req.user.email);
       
-      // Check if the requesting admin is a demo account
-      const isDemoAdmin = req.user.email.includes('demo.') && req.user.email.includes('@example.com');
-      
-      // Filter users based on admin type
-      const filteredUsers = users.filter(user => {
-        const isUserDemo = user.email.includes('demo.') && user.email.includes('@example.com');
-        
-        if (isDemoAdmin) {
-          // Demo admin sees only demo accounts
-          return isUserDemo;
-        } else {
-          // Production admin sees only production accounts
-          return !isUserDemo;
-        }
-      });
-      
-      res.json(filteredUsers.map(user => ({
+      res.json(users.map(user => ({
         id: user.id,
         name: user.name,
         email: user.email,
         role: user.role,
-        profileImage: user.profileImage
+        profileImage: user.profileImage,
+        specialization: user.specialization
       })));
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch users" });
@@ -408,49 +393,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let achievements;
       
       if (req.user.role === "admin") {
-        achievements = await storage.getAllAchievements();
-        
-        // Check if the requesting admin is a demo account
-        const isDemoAdmin = req.user.email.includes('demo.') && req.user.email.includes('@example.com');
-        
-        if (isDemoAdmin) {
-          // Demo admin sees only achievements from demo accounts
-          const demoUsers = await storage.getUsers();
-          const demoUserIds = demoUsers
-            .filter(user => user.email.includes('demo.') && user.email.includes('@example.com'))
-            .map(user => user.id);
-          achievements = achievements.filter(achievement => demoUserIds.includes(achievement.studentId));
-        } else {
-          // Production admin sees only achievements from production accounts
-          const productionUsers = await storage.getUsers();
-          const productionUserIds = productionUsers
-            .filter(user => !(user.email.includes('demo.') && user.email.includes('@example.com')))
-            .map(user => user.id);
-          achievements = achievements.filter(achievement => productionUserIds.includes(achievement.studentId));
-        }
+        achievements = await (storage as any).getAchievementsFilteredByType(req.user.email);
       } else if (req.user.role === "teacher") {
-        // Teachers see achievements from all departments for simplicity in demo
-        // In production, we would get the teacher's assigned department
-        const teacherDepartment = req.query.department as string || "Computer Science";
-        achievements = await storage.getAchievementsByDepartment(teacherDepartment);
-        
-        // Check if the requesting teacher is a demo account
-        const isDemoTeacher = req.user.email.includes('demo.') && req.user.email.includes('@example.com');
-        
-        if (isDemoTeacher) {
-          // Demo teacher sees only achievements from demo accounts
-          const demoUsers = await storage.getUsers();
-          const demoUserIds = demoUsers
-            .filter(user => user.email.includes('demo.') && user.email.includes('@example.com'))
-            .map(user => user.id);
-          achievements = achievements.filter(achievement => demoUserIds.includes(achievement.studentId));
-        } else {
-          // Production teacher sees only achievements from production accounts
-          const productionUsers = await storage.getUsers();
-          const productionUserIds = productionUsers
-            .filter(user => !(user.email.includes('demo.') && user.email.includes('@example.com')))
-            .map(user => user.id);
-          achievements = achievements.filter(achievement => productionUserIds.includes(achievement.studentId));
+        // For teachers, get all achievements filtered by account type
+        achievements = await (storage as any).getAchievementsFilteredByType(req.user.email);
+        // Further filter by department if needed
+        const teacherDepartment = req.query.department as string;
+        if (teacherDepartment) {
+          achievements = achievements.filter(a => a.department === teacherDepartment);
         }
       } else {
         // Students see only their own achievements
@@ -628,49 +578,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get appropriate achievements based on role
       if (req.user.role === "admin") {
-        achievements = await storage.getAllAchievements();
-        
-        // Check if the requesting admin is a demo account
-        const isDemoAdmin = req.user.email.includes('demo.') && req.user.email.includes('@example.com');
-        
-        if (isDemoAdmin) {
-          // Demo admin sees only achievements from demo accounts
-          const demoUsers = await storage.getUsers();
-          const demoUserIds = demoUsers
-            .filter(user => user.email.includes('demo.') && user.email.includes('@example.com'))
-            .map(user => user.id);
-          achievements = achievements.filter(achievement => demoUserIds.includes(achievement.studentId));
-        } else {
-          // Production admin sees only achievements from production accounts
-          const productionUsers = await storage.getUsers();
-          const productionUserIds = productionUsers
-            .filter(user => !(user.email.includes('demo.') && user.email.includes('@example.com')))
-            .map(user => user.id);
-          achievements = achievements.filter(achievement => productionUserIds.includes(achievement.studentId));
-        }
+        achievements = await (storage as any).getAchievementsFilteredByType(req.user.email);
       } else if (req.user.role === "teacher") {
-        // Teachers see achievements from all departments for simplicity in demo
-        // In production, we would get the teacher's assigned department
-        const teacherDepartment = req.query.department as string || "Computer Science";
-        achievements = await storage.getAchievementsByDepartment(teacherDepartment);
-        
-        // Check if the requesting teacher is a demo account
-        const isDemoTeacher = req.user.email.includes('demo.') && req.user.email.includes('@example.com');
-        
-        if (isDemoTeacher) {
-          // Demo teacher sees only achievements from demo accounts
-          const demoUsers = await storage.getUsers();
-          const demoUserIds = demoUsers
-            .filter(user => user.email.includes('demo.') && user.email.includes('@example.com'))
-            .map(user => user.id);
-          achievements = achievements.filter(achievement => demoUserIds.includes(achievement.studentId));
-        } else {
-          // Production teacher sees only achievements from production accounts
-          const productionUsers = await storage.getUsers();
-          const productionUserIds = productionUsers
-            .filter(user => !(user.email.includes('demo.') && user.email.includes('@example.com')))
-            .map(user => user.id);
-          achievements = achievements.filter(achievement => productionUserIds.includes(achievement.studentId));
+        // For teachers, get all achievements filtered by account type
+        achievements = await (storage as any).getAchievementsFilteredByType(req.user.email);
+        // Further filter by department if needed
+        const teacherDepartment = req.query.department as string;
+        if (teacherDepartment) {
+          achievements = achievements.filter(a => a.department === teacherDepartment);
         }
       } else {
         achievements = await storage.getAchievementsByStudent(req.user.id);
@@ -704,51 +619,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       let achievements = [];
       
-      // Get appropriate achievements based on role
-      if (req.user.role === "admin") {
-        achievements = await storage.getAllAchievements();
+      // Get achievements filtered by account type
+      if (req.user.role === "admin" || req.user.role === "teacher") {
+        achievements = await (storage as any).getAchievementsFilteredByType(req.user.email);
         
-        // Check if the requesting admin is a demo account
-        const isDemoAdmin = req.user.email.includes('demo.') && req.user.email.includes('@example.com');
-        
-        if (isDemoAdmin) {
-          // Demo admin sees only achievements from demo accounts
-          const demoUsers = await storage.getUsers();
-          const demoUserIds = demoUsers
-            .filter(user => user.email.includes('demo.') && user.email.includes('@example.com'))
-            .map(user => user.id);
-          achievements = achievements.filter(achievement => demoUserIds.includes(achievement.studentId));
-        } else {
-          // Production admin sees only achievements from production accounts
-          const productionUsers = await storage.getUsers();
-          const productionUserIds = productionUsers
-            .filter(user => !(user.email.includes('demo.') && user.email.includes('@example.com')))
-            .map(user => user.id);
-          achievements = achievements.filter(achievement => productionUserIds.includes(achievement.studentId));
-        }
-      } else if (req.user.role === "teacher") {
-        // Teachers see achievements from all departments for simplicity in demo
-        // In production, we would get the teacher's assigned department
-        const teacherDepartment = req.query.department as string || "Computer Science";
-        achievements = await storage.getAchievementsByDepartment(teacherDepartment);
-        
-        // Check if the requesting teacher is a demo account
-        const isDemoTeacher = req.user.email.includes('demo.') && req.user.email.includes('@example.com');
-        
-        if (isDemoTeacher) {
-          // Demo teacher sees only achievements from demo accounts
-          const demoUsers = await storage.getUsers();
-          const demoUserIds = demoUsers
-            .filter(user => user.email.includes('demo.') && user.email.includes('@example.com'))
-            .map(user => user.id);
-          achievements = achievements.filter(achievement => demoUserIds.includes(achievement.studentId));
-        } else {
-          // Production teacher sees only achievements from production accounts
-          const productionUsers = await storage.getUsers();
-          const productionUserIds = productionUsers
-            .filter(user => !(user.email.includes('demo.') && user.email.includes('@example.com')))
-            .map(user => user.id);
-          achievements = achievements.filter(achievement => productionUserIds.includes(achievement.studentId));
+        // For teachers, further filter by department if needed
+        if (req.user.role === "teacher") {
+          const teacherDepartment = req.query.department as string;
+          if (teacherDepartment) {
+            achievements = achievements.filter(a => a.department === teacherDepartment);
+          }
         }
       }
 
@@ -789,15 +669,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           if (isDemoAccount) {
             // For demo accounts, count only demo users
-            const demoStudents = await storage.getUsers();
-            const demoTeachers = await storage.getUsers();
-            
-            const filteredStudents = demoStudents.filter(user => 
-              user.role === 'student' && user.email.includes('@example.com')
-            );
-            const filteredTeachers = demoTeachers.filter(user => 
-              user.role === 'teacher' && user.email.includes('@example.com')
-            );
+            const filteredStudents = await (storage as any).getUsersByRoleFilteredByType('student', req.user.email);
+            const filteredTeachers = await (storage as any).getUsersByRoleFilteredByType('teacher', req.user.email);
             
             // Count students by department/branch
             for (const student of filteredStudents) {
@@ -819,15 +692,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             teachersCount = filteredTeachers.length;
           } else {
             // For official accounts, count only official users
-            const officialStudents = await storage.getUsers();
-            const officialTeachers = await storage.getUsers();
-            
-            const filteredStudents = officialStudents.filter(user => 
-              user.role === 'student' && !user.email.includes('@example.com')
-            );
-            const filteredTeachers = officialTeachers.filter(user => 
-              user.role === 'teacher' && !user.email.includes('@example.com')
-            );
+            const filteredStudents = await (storage as any).getUsersByRoleFilteredByType('student', req.user.email);
+            const filteredTeachers = await (storage as any).getUsersByRoleFilteredByType('teacher', req.user.email);
             
             // Count students by department/branch
             for (const student of filteredStudents) {
@@ -977,28 +843,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all student profiles (Admin only)
   app.get("/api/student-profiles", authenticateToken, checkRole(["admin"]), async (req, res) => {
     try {
-      const profiles = await storage.getAllStudentProfiles();
-      
-      // Check if the requesting admin is a demo account
-      const isDemoAdmin = req.user.email.includes('demo.') && req.user.email.includes('@example.com');
-      
-      if (isDemoAdmin) {
-        // Demo admin sees only profiles from demo accounts
-        const demoUsers = await storage.getUsers();
-        const demoUserIds = demoUsers
-          .filter(user => user.email.includes('demo.') && user.email.includes('@example.com'))
-          .map(user => user.id);
-        const filteredProfiles = profiles.filter(profile => demoUserIds.includes(profile.userId));
-        res.json(filteredProfiles);
-      } else {
-        // Production admin sees only profiles from production accounts
-        const productionUsers = await storage.getUsers();
-        const productionUserIds = productionUsers
-          .filter(user => !(user.email.includes('demo.') && user.email.includes('@example.com')))
-          .map(user => user.id);
-        const filteredProfiles = profiles.filter(profile => productionUserIds.includes(profile.userId));
-        res.json(filteredProfiles);
-      }
+      const profiles = await (storage as any).getStudentProfilesFilteredByType(req.user.email);
+      res.json(profiles);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch student profiles" });
     }
@@ -1125,11 +971,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const users = await storage.searchUsers(query);
       
-      // Filter users based on admin type (demo vs production)
-      const isDemoAdmin = req.user.email.includes('demo.') && req.user.email.includes('@example.com');
+      // Filter users based on admin type (demo vs production)  
+      const isAdminDemo = req.user.email.includes('@example.com');
       const filteredUsers = users.filter(user => {
-        const isUserDemo = user.email.includes('demo.') && user.email.includes('@example.com');
-        return isDemoAdmin ? isUserDemo : !isUserDemo;
+        const isUserDemo = user.email.includes('@example.com');
+        return isAdminDemo === isUserDemo;
       });
 
       res.json(filteredUsers.map(user => ({
@@ -1155,22 +1001,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const profiles = await storage.searchStudentProfiles(query);
       
       // Filter profiles based on admin type (demo vs production)
-      const isDemoAdmin = req.user.email.includes('demo.') && req.user.email.includes('@example.com');
-      if (isDemoAdmin) {
-        const demoUsers = await storage.getUsers();
-        const demoUserIds = demoUsers
-          .filter(user => user.email.includes('demo.') && user.email.includes('@example.com'))
-          .map(user => user.id);
-        const filteredProfiles = profiles.filter(profile => demoUserIds.includes(profile.userId));
-        res.json(filteredProfiles);
-      } else {
-        const productionUsers = await storage.getUsers();
-        const productionUserIds = productionUsers
-          .filter(user => !(user.email.includes('demo.') && user.email.includes('@example.com')))
-          .map(user => user.id);
-        const filteredProfiles = profiles.filter(profile => productionUserIds.includes(profile.userId));
-        res.json(filteredProfiles);
-      }
+      const isAdminDemo = req.user.email.includes('@example.com');
+      const allUsers = await (storage as any).getUsersFilteredByType(req.user.email);
+      const filteredUserIds = allUsers.map(user => user.id);
+      const filteredProfiles = profiles.filter(profile => filteredUserIds.includes(profile.userId));
+      res.json(filteredProfiles);
     } catch (error) {
       res.status(500).json({ message: "Failed to search student profiles" });
     }
@@ -1183,10 +1018,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const teachers = await storage.getTeachersBySpecialization(specialization);
       
       // Filter teachers based on admin type (demo vs production)
-      const isDemoAdmin = req.user.email.includes('demo.') && req.user.email.includes('@example.com');
+      const isAdminDemo = req.user.email.includes('@example.com');
       const filteredTeachers = teachers.filter(teacher => {
-        const isTeacherDemo = teacher.email.includes('demo.') && teacher.email.includes('@example.com');
-        return isDemoAdmin ? isTeacherDemo : !isTeacherDemo;
+        const isTeacherDemo = teacher.email.includes('@example.com');
+        return isAdminDemo === isTeacherDemo;
       });
 
       res.json(filteredTeachers.map(teacher => ({

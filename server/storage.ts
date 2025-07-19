@@ -228,6 +228,17 @@ export class MongoStorage implements IStorage {
     }
   }
 
+  // Get users filtered by account type (demo vs official)
+  async getUsersFilteredByType(adminEmail: string): Promise<User[]> {
+    try {
+      const allUsers = await this.getUsers();
+      return this.filterUsersByType(allUsers, adminEmail);
+    } catch (error) {
+      console.error("Error getting filtered users:", error);
+      return [];
+    }
+  }
+
   // Helper method to check if user is demo or official
   private isDemoUser(email: string): boolean {
     return email.includes('@example.com');
@@ -245,6 +256,17 @@ export class MongoStorage implements IStorage {
       return users.map(user => ({ ...user.toObject(), id: user._id.toString() }));
     } catch (error) {
       console.error("Error getting users by role:", error);
+      return [];
+    }
+  }
+
+  // Get users by role filtered by account type (demo vs official)
+  async getUsersByRoleFilteredByType(role: string, adminEmail: string): Promise<User[]> {
+    try {
+      const allUsers = await this.getUsersByRole(role);
+      return this.filterUsersByType(allUsers, adminEmail);
+    } catch (error) {
+      console.error("Error getting filtered users by role:", error);
       return [];
     }
   }
@@ -306,6 +328,23 @@ export class MongoStorage implements IStorage {
       }));
     } catch (error) {
       console.error("Error getting all student profiles:", error);
+      return [];
+    }
+  }
+
+  // Get student profiles filtered by account type (demo vs official)
+  async getStudentProfilesFilteredByType(adminEmail: string): Promise<StudentProfile[]> {
+    try {
+      const profiles = await this.getAllStudentProfiles();
+      const isAdminDemo = this.isDemoUser(adminEmail);
+      
+      return profiles.filter(profile => {
+        const userEmail = (profile as any).userId?.email || '';
+        const isProfileDemo = this.isDemoUser(userEmail);
+        return isAdminDemo === isProfileDemo;
+      });
+    } catch (error) {
+      console.error("Error getting filtered student profiles:", error);
       return [];
     }
   }
@@ -687,6 +726,27 @@ export class MongoStorage implements IStorage {
       }));
     } catch (error) {
       console.error("Error getting all achievements:", error);
+      return [];
+    }
+  }
+
+  // Get achievements filtered by account type (demo vs official)
+  async getAchievementsFilteredByType(adminEmail: string): Promise<Achievement[]> {
+    try {
+      const achievements = await this.getAllAchievements();
+      const isAdminDemo = this.isDemoUser(adminEmail);
+      
+      // Get all users to filter achievements
+      const allUsers = await this.getUsers();
+      const filteredUserIds = allUsers
+        .filter(user => this.isDemoUser(user.email) === isAdminDemo)
+        .map(user => user.id);
+      
+      return achievements.filter(achievement => 
+        filteredUserIds.includes(achievement.studentId)
+      );
+    } catch (error) {
+      console.error("Error getting filtered achievements:", error);
       return [];
     }
   }
