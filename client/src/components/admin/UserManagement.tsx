@@ -77,6 +77,11 @@ export default function UserManagement() {
   const pageSize = 10;
   
   const { toast } = useToast();
+  
+  // Fetch student profiles for display
+  const { data: studentProfiles } = useQuery({
+    queryKey: ['/api/student-profiles'],
+  });
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();
 
@@ -399,6 +404,21 @@ export default function UserManagement() {
                               </div>
                             )}
                           </div>
+                        ) : user.role === 'student' ? (
+                          (() => {
+                            const studentProfile = studentProfiles?.find((profile: any) => profile.userId._id === user.id);
+                            if (!studentProfile) {
+                              return <span className="text-gray-400 italic">No profile</span>;
+                            }
+                            return (
+                              <div>
+                                <span className="font-medium">{studentProfile.branch}</span>
+                                <div className="text-xs text-gray-500 mt-1">
+                                  {studentProfile.course} - Year {studentProfile.year}
+                                </div>
+                              </div>
+                            );
+                          })()
                         ) : '-'}
                       </div>
                     </td>

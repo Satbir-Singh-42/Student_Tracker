@@ -131,8 +131,8 @@ export default function GlobalReports() {
     return departments.map((dept: any) => {
       // Get achievements for students in this department
       const deptAchievements = achievements.filter((achievement: any) => {
-        const studentProfile = studentProfiles.find((profile: any) => profile.userId === achievement.studentId);
-        return studentProfile && studentProfile.department === dept.name;
+        const studentProfile = studentProfiles.find((profile: any) => profile.userId._id === achievement.studentId);
+        return studentProfile && studentProfile.branch === dept.name;
       });
       
       // Count achievements by type for this department
