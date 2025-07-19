@@ -130,6 +130,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(200).send("Student Activity Record Platform - Server is running");
   });
 
+  // Comprehensive monitoring endpoint for external services
+  app.get("/api/monitor", (req: Request, res: Response) => {
+    const dbStatus = getMongoDBStatus();
+    const uptime = process.uptime();
+    const memory = process.memoryUsage();
+    
+    const healthScore = dbStatus && uptime > 0 ? 100 : 0;
+    
+    res.status(200).json({
+      service: "Student Activity Record Platform",
+      status: dbStatus ? "healthy" : "degraded",
+      health_score: healthScore,
+      timestamp: new Date().toISOString(),
+      uptime_seconds: uptime,
+      uptime_human: `${Math.floor(uptime / 60)} minutes`,
+      database: {
+        connected: dbStatus,
+        type: "MongoDB Atlas"
+      },
+      memory: {
+        used_mb: Math.round(memory.heapUsed / 1024 / 1024),
+        total_mb: Math.round(memory.heapTotal / 1024 / 1024),
+        usage_percent: Math.round((memory.heapUsed / memory.heapTotal) * 100)
+      },
+      endpoints: {
+        ping: "/api/ping",
+        health: "/api/health", 
+        status: "/api/status",
+        monitor: "/api/monitor"
+      }
+    });
+  });
+
   // Authentication Routes
   app.post("/api/auth/login", authLimiter, validateBody(loginSchema), asyncHandler(async (req: Request, res: Response) => {
       const validatedData = req.body;
