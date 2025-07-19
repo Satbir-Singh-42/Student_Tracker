@@ -64,11 +64,15 @@ export default function VerifyActivities() {
     return matchesSearch && matchesType && matchesStatus;
   });
 
-  // Get students associated with achievements
-  const getStudentName = (studentId: number) => {
-    // In a real app, we would fetch student names from the API
-    // For now, we'll just return a placeholder
-    return `Student #${studentId}`;
+  // Fetch user data to get student names
+  const { data: users } = useQuery({
+    queryKey: ['/api/users'],
+  });
+
+  // Get student name by ID
+  const getStudentName = (studentId: string) => {
+    const student = users?.find((user: any) => user.id === studentId);
+    return student ? student.name : `Student #${studentId}`;
   };
 
   // Format date

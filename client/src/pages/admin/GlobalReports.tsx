@@ -48,6 +48,17 @@ export default function GlobalReports() {
     queryKey: ['/api/student-profiles'],
   });
 
+  // Fetch user data to get student names
+  const { data: users } = useQuery({
+    queryKey: ['/api/users'],
+  });
+
+  // Get student name by ID
+  const getStudentName = (studentId: string) => {
+    const student = users?.find((user: any) => user.id === studentId);
+    return student ? student.name : `Student #${studentId}`;
+  };
+
   const isLoading = statsLoading || achievementsLoading || departmentsLoading;
 
   // Generate and download report
@@ -452,7 +463,7 @@ export default function GlobalReports() {
                       {achievements.slice(0, 5).map((achievement) => (
                         <tr key={achievement.id} className="hover:bg-gray-50">
                           <td className="p-3 text-sm">{achievement.title}</td>
-                          <td className="p-3 text-sm">Student #{achievement.studentId}</td>
+                          <td className="p-3 text-sm">{getStudentName(achievement.studentId)}</td>
                           <td className="p-3 text-sm capitalize">{achievement.type}</td>
                           <td className="p-3 text-sm">
                             {new Date(achievement.dateOfActivity).toLocaleDateString()}

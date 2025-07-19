@@ -41,6 +41,12 @@ export default function AdminDashboard() {
   // Get recent activities
   const recentAchievements = achievements?.slice(0, 5) || [];
 
+  // Get student name by ID
+  const getStudentName = (studentId: string) => {
+    const student = users?.find((user: any) => user.id === studentId);
+    return student ? student.name : `Student #${studentId}`;
+  };
+
   // Format date
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString('en-US', {
@@ -232,7 +238,7 @@ export default function AdminDashboard() {
                           <div>
                             <h3 className="font-medium">{achievement.title}</h3>
                             <p className="text-sm text-gray-600 capitalize">{achievement.type}</p>
-                            <p className="text-xs text-gray-500 mt-1">Student #{achievement.studentId} • {formatDate(achievement.dateOfActivity)}</p>
+                            <p className="text-xs text-gray-500 mt-1">{getStudentName(achievement.studentId)} • {formatDate(achievement.dateOfActivity)}</p>
                           </div>
                         </div>
                         <div>
