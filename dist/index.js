@@ -430,6 +430,16 @@ var MongoStorage = class {
       return [];
     }
   }
+  // Get users filtered by account type (demo vs official)
+  async getUsersFilteredByType(adminEmail) {
+    try {
+      const allUsers = await this.getUsers();
+      return this.filterUsersByType(allUsers, adminEmail);
+    } catch (error) {
+      console.error("Error getting filtered users:", error);
+      return [];
+    }
+  }
   // Helper method to check if user is demo or official
   isDemoUser(email) {
     return email.includes("@example.com");
@@ -445,6 +455,16 @@ var MongoStorage = class {
       return users.map((user) => ({ ...user.toObject(), id: user._id.toString() }));
     } catch (error) {
       console.error("Error getting users by role:", error);
+      return [];
+    }
+  }
+  // Get users by role filtered by account type (demo vs official)
+  async getUsersByRoleFilteredByType(role, adminEmail) {
+    try {
+      const allUsers = await this.getUsersByRole(role);
+      return this.filterUsersByType(allUsers, adminEmail);
+    } catch (error) {
+      console.error("Error getting filtered users by role:", error);
       return [];
     }
   }
@@ -501,6 +521,21 @@ var MongoStorage = class {
       }));
     } catch (error) {
       console.error("Error getting all student profiles:", error);
+      return [];
+    }
+  }
+  // Get student profiles filtered by account type (demo vs official)
+  async getStudentProfilesFilteredByType(adminEmail) {
+    try {
+      const profiles = await this.getAllStudentProfiles();
+      const isAdminDemo = this.isDemoUser(adminEmail);
+      return profiles.filter((profile) => {
+        const userEmail = profile.userId?.email || "";
+        const isProfileDemo = this.isDemoUser(userEmail);
+        return isAdminDemo === isProfileDemo;
+      });
+    } catch (error) {
+      console.error("Error getting filtered student profiles:", error);
       return [];
     }
   }
@@ -832,6 +867,21 @@ var MongoStorage = class {
       }));
     } catch (error) {
       console.error("Error getting all achievements:", error);
+      return [];
+    }
+  }
+  // Get achievements filtered by account type (demo vs official)
+  async getAchievementsFilteredByType(adminEmail) {
+    try {
+      const achievements = await this.getAllAchievements();
+      const isAdminDemo = this.isDemoUser(adminEmail);
+      const allUsers = await this.getUsers();
+      const filteredUserIds = allUsers.filter((user) => this.isDemoUser(user.email) === isAdminDemo).map((user) => user.id);
+      return achievements.filter(
+        (achievement) => filteredUserIds.includes(achievement.studentId)
+      );
+    } catch (error) {
+      console.error("Error getting filtered achievements:", error);
       return [];
     }
   }
@@ -1424,22 +1474,14 @@ async function registerRoutes(app2) {
   }));
   app2.get("/api/users", authenticateToken, checkRole(["admin"]), async (req, res) => {
     try {
-      const users = await storage.getUsers();
-      const isDemoAdmin = req.user.email.includes("demo.") && req.user.email.includes("@example.com");
-      const filteredUsers = users.filter((user) => {
-        const isUserDemo = user.email.includes("demo.") && user.email.includes("@example.com");
-        if (isDemoAdmin) {
-          return isUserDemo;
-        } else {
-          return !isUserDemo;
-        }
-      });
-      res.json(filteredUsers.map((user) => ({
+      const users = await storage.getUsersFilteredByType(req.user.email);
+      res.json(users.map((user) => ({
         id: user.id,
         name: user.name,
         email: user.email,
         role: user.role,
-        profileImage: user.profileImage
+        profileImage: user.profileImage,
+        specialization: user.specialization
       })));
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch users" });
@@ -1561,29 +1603,12 @@ async function registerRoutes(app2) {
     try {
       let achievements;
       if (req.user.role === "admin") {
-        achievements = await storage.getAllAchievements();
-        const isDemoAdmin = req.user.email.includes("demo.") && req.user.email.includes("@example.com");
-        if (isDemoAdmin) {
-          const demoUsers = await storage.getUsers();
-          const demoUserIds = demoUsers.filter((user) => user.email.includes("demo.") && user.email.includes("@example.com")).map((user) => user.id);
-          achievements = achievements.filter((achievement) => demoUserIds.includes(achievement.studentId));
-        } else {
-          const productionUsers = await storage.getUsers();
-          const productionUserIds = productionUsers.filter((user) => !(user.email.includes("demo.") && user.email.includes("@example.com"))).map((user) => user.id);
-          achievements = achievements.filter((achievement) => productionUserIds.includes(achievement.studentId));
-        }
+        achievements = await storage.getAchievementsFilteredByType(req.user.email);
       } else if (req.user.role === "teacher") {
-        const teacherDepartment = req.query.department || "Computer Science";
-        achievements = await storage.getAchievementsByDepartment(teacherDepartment);
-        const isDemoTeacher = req.user.email.includes("demo.") && req.user.email.includes("@example.com");
-        if (isDemoTeacher) {
-          const demoUsers = await storage.getUsers();
-          const demoUserIds = demoUsers.filter((user) => user.email.includes("demo.") && user.email.includes("@example.com")).map((user) => user.id);
-          achievements = achievements.filter((achievement) => demoUserIds.includes(achievement.studentId));
-        } else {
-          const productionUsers = await storage.getUsers();
-          const productionUserIds = productionUsers.filter((user) => !(user.email.includes("demo.") && user.email.includes("@example.com"))).map((user) => user.id);
-          achievements = achievements.filter((achievement) => productionUserIds.includes(achievement.studentId));
+        achievements = await storage.getAchievementsFilteredByType(req.user.email);
+        const teacherDepartment = req.query.department;
+        if (teacherDepartment) {
+          achievements = achievements.filter((a) => a.department === teacherDepartment);
         }
       } else {
         achievements = await storage.getAchievementsByStudent(req.user.id);
@@ -1715,29 +1740,12 @@ async function registerRoutes(app2) {
         "extra-curricular": 0
       };
       if (req.user.role === "admin") {
-        achievements = await storage.getAllAchievements();
-        const isDemoAdmin = req.user.email.includes("demo.") && req.user.email.includes("@example.com");
-        if (isDemoAdmin) {
-          const demoUsers = await storage.getUsers();
-          const demoUserIds = demoUsers.filter((user) => user.email.includes("demo.") && user.email.includes("@example.com")).map((user) => user.id);
-          achievements = achievements.filter((achievement) => demoUserIds.includes(achievement.studentId));
-        } else {
-          const productionUsers = await storage.getUsers();
-          const productionUserIds = productionUsers.filter((user) => !(user.email.includes("demo.") && user.email.includes("@example.com"))).map((user) => user.id);
-          achievements = achievements.filter((achievement) => productionUserIds.includes(achievement.studentId));
-        }
+        achievements = await storage.getAchievementsFilteredByType(req.user.email);
       } else if (req.user.role === "teacher") {
-        const teacherDepartment = req.query.department || "Computer Science";
-        achievements = await storage.getAchievementsByDepartment(teacherDepartment);
-        const isDemoTeacher = req.user.email.includes("demo.") && req.user.email.includes("@example.com");
-        if (isDemoTeacher) {
-          const demoUsers = await storage.getUsers();
-          const demoUserIds = demoUsers.filter((user) => user.email.includes("demo.") && user.email.includes("@example.com")).map((user) => user.id);
-          achievements = achievements.filter((achievement) => demoUserIds.includes(achievement.studentId));
-        } else {
-          const productionUsers = await storage.getUsers();
-          const productionUserIds = productionUsers.filter((user) => !(user.email.includes("demo.") && user.email.includes("@example.com"))).map((user) => user.id);
-          achievements = achievements.filter((achievement) => productionUserIds.includes(achievement.studentId));
+        achievements = await storage.getAchievementsFilteredByType(req.user.email);
+        const teacherDepartment = req.query.department;
+        if (teacherDepartment) {
+          achievements = achievements.filter((a) => a.department === teacherDepartment);
         }
       } else {
         achievements = await storage.getAchievementsByStudent(req.user.id);
@@ -1764,30 +1772,13 @@ async function registerRoutes(app2) {
   app2.get("/api/reports/csv", authenticateToken, checkRole(["admin", "teacher"]), async (req, res) => {
     try {
       let achievements = [];
-      if (req.user.role === "admin") {
-        achievements = await storage.getAllAchievements();
-        const isDemoAdmin = req.user.email.includes("demo.") && req.user.email.includes("@example.com");
-        if (isDemoAdmin) {
-          const demoUsers = await storage.getUsers();
-          const demoUserIds = demoUsers.filter((user) => user.email.includes("demo.") && user.email.includes("@example.com")).map((user) => user.id);
-          achievements = achievements.filter((achievement) => demoUserIds.includes(achievement.studentId));
-        } else {
-          const productionUsers = await storage.getUsers();
-          const productionUserIds = productionUsers.filter((user) => !(user.email.includes("demo.") && user.email.includes("@example.com"))).map((user) => user.id);
-          achievements = achievements.filter((achievement) => productionUserIds.includes(achievement.studentId));
-        }
-      } else if (req.user.role === "teacher") {
-        const teacherDepartment = req.query.department || "Computer Science";
-        achievements = await storage.getAchievementsByDepartment(teacherDepartment);
-        const isDemoTeacher = req.user.email.includes("demo.") && req.user.email.includes("@example.com");
-        if (isDemoTeacher) {
-          const demoUsers = await storage.getUsers();
-          const demoUserIds = demoUsers.filter((user) => user.email.includes("demo.") && user.email.includes("@example.com")).map((user) => user.id);
-          achievements = achievements.filter((achievement) => demoUserIds.includes(achievement.studentId));
-        } else {
-          const productionUsers = await storage.getUsers();
-          const productionUserIds = productionUsers.filter((user) => !(user.email.includes("demo.") && user.email.includes("@example.com"))).map((user) => user.id);
-          achievements = achievements.filter((achievement) => productionUserIds.includes(achievement.studentId));
+      if (req.user.role === "admin" || req.user.role === "teacher") {
+        achievements = await storage.getAchievementsFilteredByType(req.user.email);
+        if (req.user.role === "teacher") {
+          const teacherDepartment = req.query.department;
+          if (teacherDepartment) {
+            achievements = achievements.filter((a) => a.department === teacherDepartment);
+          }
         }
       }
       let csv = "ID,Title,Description,Type,Date of Activity,Status,Student Name,Last Updated\n";
@@ -1815,19 +1806,13 @@ async function registerRoutes(app2) {
           let teachersCount = 0;
           let branches = [];
           if (isDemoAccount) {
-            const demoStudents = await storage.getUsers();
-            const demoTeachers = await storage.getUsers();
-            const filteredStudents = demoStudents.filter(
-              (user) => user.role === "student" && user.email.includes("@example.com")
-            );
-            const filteredTeachers = demoTeachers.filter(
-              (user) => user.role === "teacher" && user.email.includes("@example.com")
-            );
+            const filteredStudents = await storage.getUsersByRoleFilteredByType("student", req.user.email);
+            const filteredTeachers = await storage.getUsersByRoleFilteredByType("teacher", req.user.email);
             for (const student of filteredStudents) {
               try {
-                const profiles = await storage.getStudentProfiles();
-                const profile = profiles.find((p) => p.userId === student.id);
-                if (profile && profile.department === dept.name) {
+                const profiles = await storage.getStudentProfilesFilteredByType(req.user.email);
+                const profile = profiles.find((p) => p.userId._id.toString() === student.id);
+                if (profile && profile.branch === dept.name) {
                   studentsCount++;
                   if (!branches.includes(profile.branch)) {
                     branches.push(profile.branch);
@@ -1836,21 +1821,19 @@ async function registerRoutes(app2) {
               } catch (error) {
               }
             }
-            teachersCount = filteredTeachers.length;
+            for (const teacher of filteredTeachers) {
+              if (teacher.specialization === dept.name) {
+                teachersCount++;
+              }
+            }
           } else {
-            const officialStudents = await storage.getUsers();
-            const officialTeachers = await storage.getUsers();
-            const filteredStudents = officialStudents.filter(
-              (user) => user.role === "student" && !user.email.includes("@example.com")
-            );
-            const filteredTeachers = officialTeachers.filter(
-              (user) => user.role === "teacher" && !user.email.includes("@example.com")
-            );
+            const filteredStudents = await storage.getUsersByRoleFilteredByType("student", req.user.email);
+            const filteredTeachers = await storage.getUsersByRoleFilteredByType("teacher", req.user.email);
             for (const student of filteredStudents) {
               try {
-                const profiles = await storage.getStudentProfiles();
-                const profile = profiles.find((p) => p.userId === student.id);
-                if (profile && profile.department === dept.name) {
+                const profiles = await storage.getStudentProfilesFilteredByType(req.user.email);
+                const profile = profiles.find((p) => p.userId._id.toString() === student.id);
+                if (profile && profile.branch === dept.name) {
                   studentsCount++;
                   if (!branches.includes(profile.branch)) {
                     branches.push(profile.branch);
@@ -1859,7 +1842,11 @@ async function registerRoutes(app2) {
               } catch (error) {
               }
             }
-            teachersCount = filteredTeachers.length;
+            for (const teacher of filteredTeachers) {
+              if (teacher.specialization === dept.name) {
+                teachersCount++;
+              }
+            }
           }
           return {
             ...dept,
@@ -1961,19 +1948,8 @@ async function registerRoutes(app2) {
   });
   app2.get("/api/student-profiles", authenticateToken, checkRole(["admin"]), async (req, res) => {
     try {
-      const profiles = await storage.getAllStudentProfiles();
-      const isDemoAdmin = req.user.email.includes("demo.") && req.user.email.includes("@example.com");
-      if (isDemoAdmin) {
-        const demoUsers = await storage.getUsers();
-        const demoUserIds = demoUsers.filter((user) => user.email.includes("demo.") && user.email.includes("@example.com")).map((user) => user.id);
-        const filteredProfiles = profiles.filter((profile) => demoUserIds.includes(profile.userId));
-        res.json(filteredProfiles);
-      } else {
-        const productionUsers = await storage.getUsers();
-        const productionUserIds = productionUsers.filter((user) => !(user.email.includes("demo.") && user.email.includes("@example.com"))).map((user) => user.id);
-        const filteredProfiles = profiles.filter((profile) => productionUserIds.includes(profile.userId));
-        res.json(filteredProfiles);
-      }
+      const profiles = await storage.getStudentProfilesFilteredByType(req.user.email);
+      res.json(profiles);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch student profiles" });
     }
@@ -2075,10 +2051,10 @@ async function registerRoutes(app2) {
         return res.status(400).json({ message: "Search query is required" });
       }
       const users = await storage.searchUsers(query);
-      const isDemoAdmin = req.user.email.includes("demo.") && req.user.email.includes("@example.com");
+      const isAdminDemo = req.user.email.includes("@example.com");
       const filteredUsers = users.filter((user) => {
-        const isUserDemo = user.email.includes("demo.") && user.email.includes("@example.com");
-        return isDemoAdmin ? isUserDemo : !isUserDemo;
+        const isUserDemo = user.email.includes("@example.com");
+        return isAdminDemo === isUserDemo;
       });
       res.json(filteredUsers.map((user) => ({
         id: user.id,
@@ -2098,18 +2074,11 @@ async function registerRoutes(app2) {
         return res.status(400).json({ message: "Search query is required" });
       }
       const profiles = await storage.searchStudentProfiles(query);
-      const isDemoAdmin = req.user.email.includes("demo.") && req.user.email.includes("@example.com");
-      if (isDemoAdmin) {
-        const demoUsers = await storage.getUsers();
-        const demoUserIds = demoUsers.filter((user) => user.email.includes("demo.") && user.email.includes("@example.com")).map((user) => user.id);
-        const filteredProfiles = profiles.filter((profile) => demoUserIds.includes(profile.userId));
-        res.json(filteredProfiles);
-      } else {
-        const productionUsers = await storage.getUsers();
-        const productionUserIds = productionUsers.filter((user) => !(user.email.includes("demo.") && user.email.includes("@example.com"))).map((user) => user.id);
-        const filteredProfiles = profiles.filter((profile) => productionUserIds.includes(profile.userId));
-        res.json(filteredProfiles);
-      }
+      const isAdminDemo = req.user.email.includes("@example.com");
+      const allUsers = await storage.getUsersFilteredByType(req.user.email);
+      const filteredUserIds = allUsers.map((user) => user.id);
+      const filteredProfiles = profiles.filter((profile) => filteredUserIds.includes(profile.userId));
+      res.json(filteredProfiles);
     } catch (error) {
       res.status(500).json({ message: "Failed to search student profiles" });
     }
@@ -2118,10 +2087,10 @@ async function registerRoutes(app2) {
     try {
       const { specialization } = req.params;
       const teachers = await storage.getTeachersBySpecialization(specialization);
-      const isDemoAdmin = req.user.email.includes("demo.") && req.user.email.includes("@example.com");
+      const isAdminDemo = req.user.email.includes("@example.com");
       const filteredTeachers = teachers.filter((teacher) => {
-        const isTeacherDemo = teacher.email.includes("demo.") && teacher.email.includes("@example.com");
-        return isDemoAdmin ? isTeacherDemo : !isTeacherDemo;
+        const isTeacherDemo = teacher.email.includes("@example.com");
+        return isAdminDemo === isTeacherDemo;
       });
       res.json(filteredTeachers.map((teacher) => ({
         id: teacher.id,
