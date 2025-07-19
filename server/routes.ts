@@ -105,13 +105,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Serve uploaded files
   app.use('/uploads', express.static(uploadDir));
 
-  // Health check endpoint
+  // Health check endpoints for monitoring services
   app.head("/api/health", (req: Request, res: Response) => {
     res.status(200).end();
   });
 
   app.get("/api/health", (req: Request, res: Response) => {
-    res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
+    res.status(200).json({ 
+      status: "ok", 
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      memory: process.memoryUsage(),
+      database: getMongoDBStatus()
+    });
+  });
+
+  // Simple ping endpoint for external monitoring
+  app.get("/api/ping", (req: Request, res: Response) => {
+    res.status(200).send("pong");
+  });
+
+  // Root endpoint for basic monitoring
+  app.get("/api/status", (req: Request, res: Response) => {
+    res.status(200).send("Student Activity Record Platform - Server is running");
   });
 
   // Authentication Routes
