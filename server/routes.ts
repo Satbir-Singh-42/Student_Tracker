@@ -672,12 +672,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const filteredStudents = await (storage as any).getUsersByRoleFilteredByType('student', req.user.email);
             const filteredTeachers = await (storage as any).getUsersByRoleFilteredByType('teacher', req.user.email);
             
-            // Count students by department/branch
+            // Count students by branch (student profiles use branch field, not department)
             for (const student of filteredStudents) {
               try {
-                const profiles = await storage.getStudentProfiles();
-                const profile = profiles.find(p => p.userId === student.id);
-                if (profile && profile.department === dept.name) {
+                const profiles = await (storage as any).getStudentProfilesFilteredByType(req.user.email);
+                const profile = profiles.find((p: any) => p.userId._id.toString() === student.id);
+                if (profile && profile.branch === dept.name) {
                   studentsCount++;
                   if (!branches.includes(profile.branch)) {
                     branches.push(profile.branch);
@@ -699,12 +699,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const filteredStudents = await (storage as any).getUsersByRoleFilteredByType('student', req.user.email);
             const filteredTeachers = await (storage as any).getUsersByRoleFilteredByType('teacher', req.user.email);
             
-            // Count students by department/branch
+            // Count students by branch (student profiles use branch field, not department)
             for (const student of filteredStudents) {
               try {
-                const profiles = await storage.getStudentProfiles();
-                const profile = profiles.find(p => p.userId === student.id);
-                if (profile && profile.department === dept.name) {
+                const profiles = await (storage as any).getStudentProfilesFilteredByType(req.user.email);
+                const profile = profiles.find((p: any) => p.userId._id.toString() === student.id);
+                if (profile && profile.branch === dept.name) {
                   studentsCount++;
                   if (!branches.includes(profile.branch)) {
                     branches.push(profile.branch);
