@@ -5,10 +5,10 @@ import fs from 'fs';
 import path from 'path';
 
 console.log('Building frontend...');
-execSync('vite build', { stdio: 'inherit' });
+execSync('npx vite build', { stdio: 'inherit' });
 
 console.log('Building backend...');
-execSync('esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/index.js', { stdio: 'inherit' });
+execSync('npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/index.js', { stdio: 'inherit' });
 
 // Create the directory structure that the start script expects
 const serverDir = path.join('dist', 'server');
