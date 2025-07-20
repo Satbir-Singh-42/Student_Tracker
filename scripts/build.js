@@ -4,17 +4,22 @@ import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
+console.log('🏗️  Starting production build...');
+
 try {
-  console.log('Installing build dependencies...');
-  // Ensure all build dependencies are available
-  execSync('npm install', { stdio: 'inherit' });
+  // Set NODE_ENV for production build
+  process.env.NODE_ENV = 'production';
+  
+  console.log('📦 Installing dependencies...');
+  execSync('npm ci --include=dev', { stdio: 'inherit' });
 
-  console.log('Building frontend...');
-  // Use the existing vite command from the project
-  execSync('./node_modules/.bin/vite build', { stdio: 'inherit' });
+  console.log('🎨 Building frontend with Vite...');
+  // Use production config if in production environment
+  const viteConfig = process.env.RENDER ? 'vite.config.production.ts' : 'vite.config.ts';
+  execSync(`npx vite build --config ${viteConfig}`, { stdio: 'inherit' });
 
-  console.log('Building backend...');
-  execSync('./node_modules/.bin/esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/index.js', { stdio: 'inherit' });
+  console.log('⚙️  Building backend with esbuild...');
+  execSync('npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/index.js', { stdio: 'inherit' });
 
   // Create the directory structure that the start script expects
   const serverDir = path.join('dist', 'server');
@@ -22,39 +27,29 @@ try {
     fs.mkdirSync(serverDir, { recursive: true });
   }
 
-  // Copy the built file to the expected location if it doesn't already exist there
-  if (fs.existsSync('dist/index.js') && !fs.existsSync('dist/server/index.js')) {
+  // Copy the built file to the expected location
+  if (fs.existsSync('dist/index.js')) {
     fs.copyFileSync('dist/index.js', 'dist/server/index.js');
   }
 
-  console.log('Build completed! Files created:');
-  if (fs.existsSync('dist/index.js')) {
-    console.log('- dist/index.js (main build)');
-  }
-  if (fs.existsSync('dist/server/index.js')) {
-    console.log('- dist/server/index.js (for package.json start script)');
-  }
-  if (fs.existsSync('dist/public')) {
-    console.log('- dist/public/ (frontend assets)');
-  }
-} catch (error) {
-  console.error('Build failed:', error.message);
+  console.log('✅ Build completed successfully!');
+  console.log('📁 Generated files:');
   
-  // Fallback: try using the original vite build command directly
-  console.log('Attempting fallback build...');
-  try {
-    execSync('vite build', { stdio: 'inherit', cwd: process.cwd() });
-    execSync('esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/index.js', { stdio: 'inherit' });
-    
-    const serverDir = path.join('dist', 'server');
-    if (!fs.existsSync(serverDir)) {
-      fs.mkdirSync(serverDir, { recursive: true });
-    }
-    fs.copyFileSync('dist/index.js', 'dist/server/index.js');
-    
-    console.log('Fallback build completed successfully!');
-  } catch (fallbackError) {
-    console.error('Fallback build also failed:', fallbackError.message);
-    process.exit(1);
+  if (fs.existsSync('dist/index.js')) {
+    const stats = fs.statSync('dist/index.js');
+    console.log(`   - dist/index.js (${Math.round(stats.size / 1024)}KB)`);
   }
+  
+  if (fs.existsSync('dist/server/index.js')) {
+    console.log('   - dist/server/index.js (server entry)');
+  }
+  
+  if (fs.existsSync('dist/public')) {
+    const files = fs.readdirSync('dist/public');
+    console.log(`   - dist/public/ (${files.length} frontend files)`);
+  }
+
+} catch (error) {
+  console.error('❌ Build failed:', error.message);
+  process.exit(1);
 }

@@ -3,12 +3,14 @@ services:
     name: student-activity-platform
     env: node
     plan: free
-    buildCommand: bash build.sh
+    buildCommand: node scripts/build.js
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
+      - key: RENDER
+        value: true
       - key: NPM_CONFIG_PRODUCTION
         value: false
       - key: MONGODB_URI
