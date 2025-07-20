@@ -1,0 +1,47 @@
+# Renderignore - files to exclude from deployment
+
+# Development files
+.replit
+.config/
+.upm/
+.cache/
+.local/
+
+# Environment files
+.env
+.env.local
+.env.development
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+dist/
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Documentation (optional)
+README.md
+BUILD_DEPLOYMENT_GUIDE.md
+
+# Test files
+test/
+tests/
+__tests__/
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
